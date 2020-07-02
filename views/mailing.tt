@@ -3,14 +3,17 @@
       <div id="content">
         <div id="header">
           <h1>BulkMail pagina</h1>
-          <h2>Selecteer ontvangers voor uw mailing</h2>
+          <h2>Selecteer hier de ontvangers voor uw mailing</h2>
         </div>
 
         <div id="getting-started">
           <h1>Ontvangen Email:</h1>
-                    
+
           <div id="about-content">
-            <p>Je hebt geen geldige of actieve key meegegeven. Zonder key is deze pagina nutteloos.</p>
+            <table>
+              <tr><th>Datum</th><th>Afzender</th><th>Onderwerp</th></tr>
+              <tr><td><% date %></td><td><% from %></td><td><% subject %></td></tr>
+            </table>
           </div>
 
         </div>

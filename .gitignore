@@ -13,3 +13,4 @@ Makefile$
 config.yml
 environments/development.yml
 environments/production.yml
+*.db
