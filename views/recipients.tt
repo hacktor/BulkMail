@@ -7,14 +7,14 @@
         </div>
 
         <div id="getting-started">
-          <h1>Ontvangen Email:</h1>
+          <h1>Deze pagina is nog niet af</h1>
                     
           <div id="maintext-content">
-<% IF error %>
-            <p><% error %>
-<% ELSE %>
-            <p>Je hebt geen geldige of actieve key meegegeven. Zonder key is deze pagina nutteloos.</p>
-<% END %>
+            <table>
+              <tr><td colspan=2><h3>Te verzenden mail</h3></td></tr>
+              <tr><td>Afzender</td><td><% new_from %></td></tr>
+              <tr><td>Onderwerp</td><td><% subject %></td></tr>
+            </table>
           </div>
 
         </div>

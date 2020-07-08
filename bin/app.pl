@@ -14,21 +14,25 @@ threads->create(sub {
     my $st = $db->prepare( config->{sqlite}{insert} );
 
     for (;;) {
-        my $pop = Net::POP3->new(config->{email}{host}, SSL => 1, Timeout => 60, SSL_ca_file => config->{email}{ca});
-        if ($pop->login(config->{email}{user}, config->{email}{pass}) > 0) {
+        my $pop = Net::POP3->new(config->{email}{host}, SSL => 1, SSL_ca_file => config->{email}{ca});
+        if (defined $pop and $pop->login(config->{email}{user}, config->{email}{pass}) > 0) {
     
             my $msgnums = $pop->list; # hashref of msgnum => size
             foreach my $msgnum (keys %$msgnums) {
     
                 my $email = Email::Simple->new(join '', @{ $pop->get($msgnum) });
                 my $key = makeKey();
-                $st->execute($key,$email->header("From"),$email->header("Subject"),$email->header("Date"),$email->body);
+                my $ackkey = makeKey();
+                $st->execute($key,$ackkey,$email->header("From"),$email->header("Subject"),$email->header("Date"),$email->body);
                 sendReceipt($email,$key);
     
                 $pop->delete($msgnum);
             }
+        } elsif (not defined $pop) {
+            warning("POP3 connection fail");
+        } else {
+            $pop->quit;
         }
-        $pop->quit;
         sleep 30;
     }
 })->detach();
@@ -54,7 +58,7 @@ sub sendReceipt {
             From    => $email->header("To"),
             Subject => "Received: " . $email->header("Subject"),
         ],
-        body => template 'body' => { bulkurl => config->{bulkurl}, key => $key }, { layout => undef },
+        body => template 'body', { bulkurl => config->{bulkurl}, key => $key }, { layout => undef },
     );
 
     sendmail($reply);

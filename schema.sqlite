@@ -1,10 +1,12 @@
 CREATE TABLE IF NOT EXISTS mbox (
     key text primary key,
+    ackkey text unique,
     from_address text,
     subject text,
     date text,
     body text,
     new_from_address text,
     recipients text,
+    status text,
     schedule text
 );

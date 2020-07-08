@@ -1,21 +1,43 @@
 <div id="page">
 
-      <div id="content">
-        <div id="header">
-          <h1>BulkMail pagina</h1>
-          <h2>Selecteer hier de ontvangers voor uw mailing</h2>
-        </div>
+  <div id="content">
+    <div id="header">
+      <h1>BulkMail pagina</h1>
+      <h2>Selecteer de afzender voor uw mailing</h2>
+    </div>
 
-        <div id="getting-started">
-          <h1>Ontvangen Email:</h1>
+    <div id="getting-started">
+      <h1>Ontvangen Email:</h1>
 
-          <div id="about-content">
-            <table>
-              <tr><th>Datum</th><th>Afzender</th><th>Onderwerp</th></tr>
-              <tr><td><% date %></td><td><% from %></td><td><% subject %></td></tr>
-            </table>
-          </div>
+      <div id="maintext-content">
+        <table>
+          <tr><th>Datum</th><th>Afzender</th><th>Onderwerp</th></tr>
+          <tr><td><% date %></td><td><% from %></td><td><% subject %></td></tr>
+        </table>
+      </div>
 
+      <br /><button onclick="toggleMail()">Toggle Mailbody</button>
+      <div id="mailbody" class=preformatted-body style="display: none">
+        <% body %>
+      </div>
+
+      <form action="/recipients" method=POST>
+      <div class="normal-content">
+        <h3>Selecteer afzender adres</h3>
+        <div class="radio">
+           <p><input type="radio" name="afz" value="<% from %>" checked>
+           <span><% from %></span></p>
+<% FOREACH from IN froms %>
+           <p><input type="radio" name="afz" value="<% from %>">
+           <span><% from %></span></p>
+<% END %>
         </div>
       </div>
+
+      <div class="normal-content">
+        <h3><input type="submit" value="Ga naar geadresseerden"></h3>
+      </div>
+      </form>
+    </div>
+  </div>
 </div>
