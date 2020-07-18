@@ -6,10 +6,10 @@
           <h2>Selecteer ontvangers voor uw mailing</h2>
         </div>
 
-        <div id="getting-started">
+        <div id="bodytext">
           <h1>Ontvangen Email:</h1>
                     
-          <div id="maintext-content">
+          <div id="maintext-highlight">
 <% IF error %>
             <p><% error %>
 <% ELSE %>

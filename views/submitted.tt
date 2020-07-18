@@ -3,7 +3,7 @@
   <div id="content">
     <div id="header">
       <h1>BulkMail pagina</h1>
-      <h2>Selecteer de afzender voor uw mailing</h2>
+      <h2>Controle van een mailing</h2>
     </div>
 
     <div id="bodytext">
@@ -22,21 +22,12 @@
         <% body %>
       </div>
 
-      <form action="/recipients" method=POST>
+      <form action="/done" method=POST>
       <div class="normal-content">
-        <h3>Selecteer afzender adres</h3>
-        <div class="radio">
-           <p><input type="radio" name="afz" value="<% from %>" checked>
-           <span><% from %></span></p>
-<% FOREACH from IN froms %>
-           <p><input type="radio" name="afz" value="<% from %>">
-           <span><% from %></span></p>
-<% END %>
-        </div>
       </div>
 
       <div class="normal-content">
-        <h3><input type="submit" value="Ga naar geadresseerden"></h3>
+        <h3><input type="submit" value="Geef mailing vrij voor verzenden"></h3>
       </div>
       </form>
     </div>

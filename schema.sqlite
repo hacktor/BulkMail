@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS mbox (
     date text,
     body text,
     new_from_address text,
+    selfrom text,
     recipients text,
     status text,
     schedule text

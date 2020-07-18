@@ -1,0 +1,10 @@
+
+Een mail van <% from %> met onderwerp:
+
+<% subject %>
+
+Staat klaar om verzonder te worden naar: <% table %> <% recipients %>
+
+Authoriseer deze mailing via onderstaande url:
+
+<% myurl %>/submitted/<% ackkey %>

@@ -46,7 +46,7 @@ float: right;
 width: 175px;
 }
 
-#header, #maintext, #getting-started {
+#header, #maintext, #bodytext {
 padding-left: 75px;
 padding-right: 30px;
 }
@@ -64,74 +64,86 @@ font-weight: normal;
 font-size: 16px;
 }
 
-#maintext h3 {
-margin: 0;
-margin-bottom: 10px;
-font-size: 14px;
-}
-
-#maintext-content {
+#maintext-highlight {
 background-color: #ffd;
 border: 1px solid #fc0;
 margin-left: -11px;
 }
-#maintext-content table {
+#maintext-highlight table {
 margin-top: 10px;
 margin-bottom: 10px;
 font-size: 11px;
 border-collapse: collapse;
 }
-#maintext-content td {
+#maintext-highlight td {
 padding: 10px;
 padding-top: 3px;
 padding-bottom: 3px;
 }
-#maintext-content td.name  {color: #555}
-#maintext-content td.value {color: #000}
+#maintext-highlight td.name  {color: #555}
+#maintext-highlight td.value {color: #000}
+#maintext-highlight h3 {margin: 10px}
 
-#maintext-content.failure {
+#maintext-highlight.failure {
 background-color: #fcc;
 border: 1px solid #f00;
 }
-#maintext-content.failure p {
+#maintext-highlight.failure p {
 margin: 0;
 padding: 10px;
 }
 
-#getting-started {
+#bodytext {
 border-top: 1px solid #ccc;
 margin-top: 25px;
 padding-top: 15px;
 }
-#getting-started h1 {
+#bodytext h1 {
 margin: 0;
 font-size: 20px;
 }
-#getting-started h2 {
+#bodytext h2 {
 margin: 0;
 font-size: 14px;
 font-weight: normal;
 color: #333;
 margin-bottom: 25px;
 }
-#getting-started ol {
+#bodytext ol {
 margin-left: 0;
 padding-left: 0;
 }
-#getting-started li {
+#bodytext li {
 font-size: 18px;
 color: #888;
 margin-bottom: 25px;
 }
-#getting-started li h2 {
+#bodytext li h2 {
 margin: 0;
 font-weight: normal;
 font-size: 18px;
 color: #333;
 }
-#getting-started li p {
+#bodytext li p {
 color: #555;
 font-size: 13px;
+}
+textarea {
+min-width:200px;
+max-width:100%;
+min-height:100px;
+height:100%;
+width:100%;
+}
+select.selectlist {
+min-width:200px;
+max-width:100%;
+min-height:100px;
+height:100%;
+width:100%;
+}
+#bodytext button {
+vertical-align: top;
 }
 
 #search {
@@ -186,10 +198,16 @@ code, tt {
     word-break: break-all;
 }
 
+.normal-content {
+    background-color: white;
+    border-top: none;
+    width: 750px;
+}
+
 .radio p {
-  line-height: 2 ;
-  margin-top: 0 ;
-  margin-bottom: 0 ;
+    line-height: 2 ;
+    margin-top: 0 ;
+    margin-bottom: 0 ;
 }
 
 #footer {
@@ -201,3 +219,6 @@ font-family: sans-serif;
 font-size: 10px;
 }
 
+#div1,#div2,#div3,#div4,#div5 {
+display: none
+}

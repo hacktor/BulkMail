@@ -1,0 +1,26 @@
+<div id="page">
+
+      <div id="content">
+        <div id="header">
+          <h1>BulkMail pagina</h1>
+          <h2>Ontvangers voor uw mailing</h2>
+        </div>
+
+        <div id="bodytext">
+          <h1>Ontvangen Email:</h1>
+
+          <div id="maintext-highlight">
+            <table>
+              <tr><td><b>Afzender</b></td><td><% new_from %></td></tr>
+              <tr><td><b>Onderwerp</b></td><td><% subject %></td></tr>
+              <tr><td><b>Datum</b></td><td><% date %></td></tr>
+              <tr><td><b>Doelgroep</b></td><td><% recipients %></td></tr>
+            </table>
+            <h3>Doelgroep is een selectie uit <% selfrom %></h3>
+          </div>
+
+          <br />
+          <h2>Een mail ter goedgekeuring is verstuurd naar <% auth_by %></h2>
+        </div>
+      </div>
+</div>

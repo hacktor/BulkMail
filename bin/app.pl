@@ -24,7 +24,7 @@ threads->create(sub {
                 my $key = makeKey();
                 my $ackkey = makeKey();
                 $st->execute($key,$ackkey,$email->header("From"),$email->header("Subject"),$email->header("Date"),$email->body);
-                sendReceipt($email,$key);
+                BulkMail::sendReceipt($email,$key);
     
                 $pop->delete($msgnum);
             }
@@ -49,18 +49,3 @@ sub makeKey {
     $string;
 }
 
-sub sendReceipt {
-
-    my ($email,$key) = @_;
-    my $reply = Email::Simple->create(
-        header => [
-            To      => $email->header("From"),
-            From    => $email->header("To"),
-            Subject => "Received: " . $email->header("Subject"),
-        ],
-        body => template 'body', { bulkurl => config->{bulkurl}, key => $key }, { layout => undef },
-    );
-
-    sendmail($reply);
-    print "Reply to ". $reply->header("To") ." send\n";
-}

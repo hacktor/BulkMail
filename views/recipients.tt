@@ -6,16 +6,86 @@
           <h2>Selecteer ontvangers voor uw mailing</h2>
         </div>
 
-        <div id="getting-started">
-          <h1>Deze pagina is nog niet af</h1>
-                    
-          <div id="maintext-content">
+        <div id="bodytext">
+          <h1>Te versturen mail:</h1>
+
+          <div id="maintext-highlight">
             <table>
-              <tr><td colspan=2><h3>Te verzenden mail</h3></td></tr>
-              <tr><td>Afzender</td><td><% new_from %></td></tr>
-              <tr><td>Onderwerp</td><td><% subject %></td></tr>
+              <tr><td><b>Afzender</b></td><td><% new_from %></td></tr>
+              <tr><td><b>Onderwerp</b></td><td><% subject %></td></tr>
+              <tr><td><b>Datum</b></td><td><% date %></td></tr>
             </table>
           </div>
+
+          <br />
+          <h1>Selecteer groep(en) geadresseerden</h1>
+  
+          <form action="/submit" method="POST" id="showhideform">
+   
+            <select name="selMyList" onchange="showHide(this)">
+                   <option value="" selected=1>Selecteer geadresseerden uit</option>
+                   <option value="1">Provincies</option>
+                   <option value="2">Gemeenten</option>
+                   <option value="3">Afdelingen</option>
+                   <option value="4">Alle leden</option>
+            </select>
+  
+            <div id="div1">
+              <table><tr><td>
+              <select multiple class="selectlist" size=10 width=40 id="provSel">
+<% FOREACH key IN prov.sort %>
+                <option value="<% key %>"><% key %></option>
+<% END %>
+              </select>
+              </td><td>
+              <button type="button" onclick='GetSelectedValues("provSel","provarea")'>&minus;&minus;&minus;&gt;</button>
+              <br />
+              <br />
+              <input type="submit" name="provSubmit" value="Klaar">
+              </td><td>
+              <textarea name="provarea" cols="20" rows="10" id="provarea"></textarea>
+              </td></tr></table>
+            </div>
+  
+            <div id="div2">
+              <table><tr><td>
+              <select multiple class="selectlist" size=10 width=40 id="citySel">
+<% FOREACH key IN city.sort %>
+                <option value="<% key %>"><% key %></option>
+<% END %>
+              </select>
+              </td><td>
+              <button type="button" onclick='GetSelectedValues("citySel","cityarea")'>&minus;&minus;&gt;</button>
+              <br />
+              <br />
+              <input type="submit" name="citySubmit" value="Klaar">
+              </td><td>
+              <textarea name="cityarea" cols="20" rows="10" id="cityarea"></textarea>
+              </td></tr></table>
+            </div>
+  
+            <div id="div3">
+              <table><tr><td>
+              <select multiple class="selectlist" size=10 width=40 id="listSel">
+<% FOREACH key IN list.sort %>
+                <option value="<% key %>"><% key %></option>
+<% END %>
+              </select>
+              </td><td>
+              <button type="button" onclick='GetSelectedValues("listSel","listarea")'>&minus;&minus;&gt;</button>
+              <br />
+              <br />
+              <input type="submit" name="listSubmit" value="Klaar">
+              </td><td>
+              <textarea name="listarea" cols="20" rows="10" id="listarea"></textarea>
+              </td></tr></table>
+            </div>
+
+            <div id="div4">
+              <h2>Alle leden</h2>
+              <h3>Nog niet beschikbaar</h3>
+            </div>
+          </form>
 
         </div>
       </div>
