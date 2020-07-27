@@ -4,8 +4,6 @@ use BulkMail;
 use threads;
 use Net::POP3;
 use Email::Simple;
-use Email::Sender::Simple qw(sendmail);
-use Email::Simple::Creator;
 
 # create a thread polling for new mail
 threads->create(sub { 
@@ -14,25 +12,29 @@ threads->create(sub {
     my $st = $db->prepare( config->{sqlite}{insert} );
 
     for (;;) {
-        my $pop = Net::POP3->new(config->{email}{host}, SSL => 1, SSL_ca_file => config->{email}{ca});
-        if (defined $pop and $pop->login(config->{email}{user}, config->{email}{pass}) > 0) {
-    
-            my $msgnums = $pop->list; # hashref of msgnum => size
-            foreach my $msgnum (keys %$msgnums) {
-    
-                my $email = Email::Simple->new(join '', @{ $pop->get($msgnum) });
-                my $key = makeKey();
-                my $ackkey = makeKey();
-                $st->execute($key,$ackkey,$email->header("From"),$email->header("Subject"),$email->header("Date"),$email->body);
-                BulkMail::sendReceipt($email,$key);
-    
-                $pop->delete($msgnum);
+        eval {
+            my $pop = Net::POP3->new(config->{pop3}{host}, SSL => 1, SSL_ca_file => config->{pop3}{ca});
+            if (defined $pop and $pop->login(config->{pop3}{user}, config->{pop3}{pass}) > 0) {
+        
+                my $msgnums = $pop->list; # hashref of msgnum => size
+                foreach my $msgnum (keys %$msgnums) {
+        
+                    my $email = Email::Simple->new(join '', @{ $pop->get($msgnum) });
+                    my $key = makeKey();
+                    my $ackkey = makeKey();
+                    $st->execute($key,$ackkey,$email->header("From"),$email->header("Subject"),$email->header("Date"),$email->body);
+                    BulkMail::sendReceipt($email,$key);
+        
+                    $pop->delete($msgnum) or warn("Delete failed");
+                    $pop->quit;
+                }
+            } elsif (not defined $pop) {
+                warning("POP3 connection fail");
+            } else {
+                $pop->quit;
             }
-        } elsif (not defined $pop) {
-            warning("POP3 connection fail");
-        } else {
-            $pop->quit;
-        }
+        };
+        warn($@) if $@;
         sleep 30;
     }
 })->detach();

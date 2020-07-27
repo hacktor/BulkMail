@@ -20,7 +20,7 @@
           </div>
 
           <br />
-          <h2>Een mail ter goedgekeuring is verstuurd naar <% auth_by %></h2>
+          <h2>Een mail ter goedgekeuring is verstuurd naar <% authorize_by %></h2>
         </div>
       </div>
 </div>

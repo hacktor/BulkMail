@@ -9,9 +9,9 @@ $eumm_version =~ s/_//;
 
 WriteMakefile(
     NAME                => 'BulkMail',
-    AUTHOR              => q{YOUR NAME <youremail@example.com>},
+    AUTHOR              => q{Ruben de Groot <ruben@hacktor.com>},
     VERSION_FROM        => 'lib/BulkMail.pm',
-    ABSTRACT            => 'YOUR APPLICATION ABSTRACT',
+    ABSTRACT            => 'BulkMail App',
     ($eumm_version >= 6.3001
       ? ('LICENSE'=> 'perl')
       : ()),

@@ -15,7 +15,8 @@
 <body>
 <% content %>
 <div id="footer">
-Powered by <a href="http://perldancer.org/">Dancer</a>
+Powered by <a href="http://perldancer.org/">Dancer</a><br>
+Environment <% settings.environment %>
 </div>
 </body>
 </html>

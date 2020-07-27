@@ -3,8 +3,14 @@ Een mail van <% from %> met onderwerp:
 
 <% subject %>
 
-Staat klaar om verzonder te worden naar: <% table %> <% recipients %>
+Staat klaar om verzonder te worden naar: <% selfrom %> <% recipients %>
 
 Authoriseer deze mailing via onderstaande url:
 
 <% myurl %>/submitted/<% ackkey %>
+
+De mail is gericht aan:
+
+<% FOREACH a in addr %>
+<% a %>
+<% END %>
