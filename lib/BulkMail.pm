@@ -23,9 +23,7 @@ sub connect_db {
 sub init_db {
     my $db = connect_db();
 
-    # slurp sql schema
-    my $schema = do { local(@ARGV,$/) = config->{sqlite}{schema}; <>};
-    $db->do($schema) or die $db->errstr;
+    $db->do( config->{sqlite}{schema} ) or die $db->errstr;
     return $db;
 }
 
