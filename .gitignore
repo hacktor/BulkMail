@@ -10,7 +10,6 @@ Makefile$
 ^cover_db
 ^.*\.log
 ^.*\.swp$
-config.yml
 environments/development.yml
 environments/production.yml
 *.db
