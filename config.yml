@@ -1,0 +1,37 @@
+# default configuration file for BulkMail Dancer App.
+# additional and environment specific configurations should be done in YAML files
+# in the "environments" directory. see the sample files:
+# - environments/development.yml.sample
+# - environments/production.yml.sample
+
+appname: "BulkMail"
+
+layout: "main"
+
+charset: "UTF-8"
+
+session: "YAML"
+session_dir: "/tmp/BulkMail-sessions"
+
+server_tokens: false
+
+sqlite:
+    db: 'emails.db'
+    insert: 'insert into mbox (key,ackkey,from_address,subject,date,body) values (?,?,?,?,?,?)'
+    update_from: 'update mbox set new_from_address = ? where key = ?'
+    update_rcpt: 'update mbox set selfrom = ?, recipients = ? where key = ?'
+    schema: >
+      CREATE TABLE IF NOT EXISTS mbox (
+        key text primary key,
+        ackkey text unique,
+        from_address text,
+        new_from_address text,
+        subject text,
+        date text,
+        body text,
+        selfrom text,
+        recipients text,
+        status text,
+        schedule text
+      );
+
