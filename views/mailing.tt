@@ -28,9 +28,9 @@
         <div class="radio">
            <p><input type="radio" name="afz" value="<% from %>" checked>
            <span><% from %></span></p>
-<% FOREACH from IN froms %>
-           <p><input type="radio" name="afz" value="<% from %>">
-           <span><% from %></span></p>
+<% FOREACH f IN froms %>
+           <p><input type="radio" name="afz" value="<% f %>">
+           <span><% f %></span></p>
 <% END %>
         </div>
       </div>

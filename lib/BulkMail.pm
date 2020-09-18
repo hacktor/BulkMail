@@ -8,6 +8,7 @@ use Email::Sender::Simple qw(sendmail);
 use Email::Simple::Creator;
 use Email::Sender::Transport::Mbox;
 use Email::Sender::Transport::SMTP;
+use Email::Address::XS qw(parse_email_addresses format_email_addresses);
 use IO::Socket::SSL;
 use DBI;
 
@@ -86,20 +87,13 @@ post '/recipients' => sub {
         }
         session->{row}{new_from_address} = param('afz');
         my $row = session('row');
-        my $st1 = database->prepare( config->{queries}{prov} );
-        my $st2 = database->prepare( config->{queries}{city} );
 
-        $st1->execute();
-        $st2->execute();
-
-        my @prov = flatten( @{ $st1->fetchall_arrayref() } );
-        my @city = flatten( @{ $st2->fetchall_arrayref() } );
         my @list = sort keys %{ config->{list} };
 
         template 'recipients', {subject => encode_entities($row->{subject}),
                                 date => encode_entities($row->{date}),
                                 new_from => encode_entities($row->{new_from_address}),
-                                prov => \@prov, city => \@city, list => \@list};
+                                list => \@list};
     } else {
         template 'index', { error => "Fout in nieuw afzender adres" };
     }
@@ -112,38 +106,32 @@ post '/submit' => sub {
         my $row = session('row');
         my $db = connect_db();
         my $stm = $db->prepare( config->{sqlite}{update_rcpt} );
+        my $recipientlist;
 
-        if (defined params->{provSubmit} and defined params->{provarea}) {
+        if (defined params->{adreslijst}) {
 
-            session selfrom => "provincie";
-            session recipients => params->{provarea};
-            $stm->execute("provincie", params->{provarea}, $row->{key});
+            $recipientlist = checkemail(params->{adreslijst});
+            session recipients => $recipientlist;
 
-        } elsif (defined params->{citySubmit} and defined params->{cityarea}) {
+        } elsif (defined params->{file}) {
 
-            session selfrom => "gemeente";
-            session recipients => params->{cityarea};
-            $stm->execute("gemeente", params->{cityarea}, $row->{key});
+            my $file = request->upload('file');
+            $recipientlist = checkemail($file->content);
+            session recipients => $recipientlist;
 
-        } elsif (defined params->{listSubmit} and defined params->{listarea}) {
-
-            session selfrom => "lists";
-            session recipients => params->{listarea};
-            $stm->execute("lists", params->{listarea}, $row->{key});
         }
 
-        if (defined session->{selfrom} and defined session->{recipients} ) {
+        if ($recipientlist) {
 
             sendNotify();
             template 'submit', {subject => encode_entities($row->{subject}),
                                 date => encode_entities($row->{date}),
                                 new_from => encode_entities($row->{new_from_address}),
-                                selfrom => session->{selfrom},
                                 authorize_by => encode_entities( config->{authorize_by} ),
                                 recipients => encode_entities( session->{recipients} )}
 
         } else {
-            template 'index', { error => "Error in submitted form" };
+            template 'index', { error => "Error in submitted form, no recipients found" };
         }
 
     } else {
@@ -155,6 +143,14 @@ any qr{.*} => sub {
     status 'not_found';
     template 'index', { error => "404 Not Found" };
 };
+
+sub checkemail {
+
+    # evaluate email addresses by parsing and formatting
+    my $recipients = shift;
+    $recipients = s/\r?\n/, /;
+    return format_email_addresses(parse_email_addresses($recipients));
+}
 
 sub sendReceipt {
 
@@ -190,22 +186,6 @@ sub sendNotify {
         my @RCPT = split /\r?\n/, session('recipients');
         my @rcptlist;
 
-        my $stm = database->prepare( config->{queries}{all} );
-        $stm->execute();
-        my $all = $stm->fetchall_hashref('email');
-
-        for my $m (keys %$all) {
-
-            if (($selfrom eq "provincie" and defined $all->{$m}->{provincie} and grep(/^$all->{$m}->{provincie}$/, @RCPT)) or
-                ($selfrom eq "gemeente" and defined $all->{$m}->{gemeente} and grep(/^$all->{$m}->{gemeente}$/, @RCPT))) {
-
-                my $addr = "$all->{$m}->{voornaam}";
-                $addr .= " $all->{$m}->{tussenvoegsel}" if defined $all->{$m}->{tussenvoegsel};
-                $addr .= " $all->{$m}->{achternaam}" if defined $all->{$m}->{achternaam};
-                $addr .= "\tuit: $all->{$m}->{gemeente}, $all->{$m}->{provincie}\n";
-                push @rcptlist, ($addr);
-            }
-        }
         if ($selfrom eq "lists") {
 
             for (@RCPT) {
@@ -216,6 +196,7 @@ sub sendNotify {
         my $transport = Email::Sender::Transport::SMTP->new({
             host => config->{smtp}{host},
             ssl => config->{smtp}{ssl},
+            SSL_verify_mode => 0,
             sasl_username => config->{smtp}{user},
             sasl_password => config->{smtp}{pass},
         });

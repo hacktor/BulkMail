@@ -13,7 +13,7 @@ threads->create(sub {
 
     for (;;) {
         eval {
-            my $pop = Net::POP3->new(config->{pop3}{host}, SSL => 1, SSL_ca_file => config->{pop3}{ca});
+            my $pop = Net::POP3->new(config->{pop3}{host}, SSL => 1, SSL_verify_mode => 0, SSL_ca_file => config->{pop3}{ca});
             if (defined $pop and $pop->login(config->{pop3}{user}, config->{pop3}{pass}) > 0) {
         
                 my $msgnums = $pop->list; # hashref of msgnum => size

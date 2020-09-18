@@ -19,7 +19,7 @@ sqlite:
     db: 'emails.db'
     insert: 'insert into mbox (key,ackkey,from_address,subject,date,body) values (?,?,?,?,?,?)'
     update_from: 'update mbox set new_from_address = ? where key = ?'
-    update_rcpt: 'update mbox set selfrom = ?, recipients = ? where key = ?'
+    update_rcpt: 'update mbox set recipients = ? where key = ?'
     schema: >
       CREATE TABLE IF NOT EXISTS mbox (
         key text primary key,
@@ -29,7 +29,6 @@ sqlite:
         subject text,
         date text,
         body text,
-        selfrom text,
         recipients text,
         status text,
         schedule text
