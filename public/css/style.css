@@ -201,13 +201,14 @@ code, tt {
 .normal-content {
     background-color: white;
     border-top: none;
-    width: 750px;
+    width: 645px;
 }
 
 .radio p {
     line-height: 2 ;
     margin-top: 0 ;
     margin-bottom: 0 ;
+    margin-right: 30px ;
 }
 
 #footer {

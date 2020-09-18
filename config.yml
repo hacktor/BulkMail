@@ -10,6 +10,8 @@ layout: "main"
 
 charset: "UTF-8"
 
+template: template_toolkit
+
 session: "YAML"
 session_dir: "/tmp/BulkMail-sessions"
 
