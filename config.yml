@@ -35,4 +35,10 @@ sqlite:
         status text,
         schedule text
       );
+      CREATE TABLE IF NOT EXISTS deliver (
+        key text primary key,
+        timestamp text,
+        recipient text,
+        delivered bool
+      );
 
