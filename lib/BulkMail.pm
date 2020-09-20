@@ -1,7 +1,6 @@
 package BulkMail;
-
+use utf8;
 use Dancer ':syntax';
-use Dancer::Plugin::Database;
 use HTML::Entities;
 use Email::Simple;
 use Email::Sender::Simple qw(sendmail);
@@ -32,42 +31,43 @@ sub flatten {
   map { ref $_ ? flatten(@{$_}) : $_ } @_;
 }
 
-get '/mailing/:key' => sub {
+any ['get', 'post'] => '/mailing/:key' => sub {
 
     my $db = connect_db();
     my $stm = $db->prepare("select * from mbox where key = ?");
     $stm->execute(param('key'));
+
     if (my $row = $stm->fetchrow_hashref()) {
 
+        my $message;
+        my $checked = $row->{from_address};
+        if (defined param('afz') and defined param('examplemail')) {
+
+            my $stm = $db->prepare( config->{sqlite}{update_from} );
+            unless ($stm->execute(param('afz'),session('key'))) {
+                template 'index', { error => "Fout in update afzender adres" };
+                return;
+            }
+
+            $checked = param('afz');
+            session->{row}{new_from_address} = param('afz');
+            examplemail($row->{from_address});
+            $message = "Voorbeeld mail verzonder naar $row->{from_address}";
+        }
         my @froms;
         for my $from (@{config->{froms}}) {
             push @froms, encode_entities($from);
         }
+
         session key => param('key');
         session row => $row;
         template 'mailing', {subject => encode_entities($row->{subject}),
                              from => encode_entities($row->{from_address}),
                              date => encode_entities($row->{date}),
                              body => encode_entities($row->{body}),
+                             message => encode_entities($message),
+                             checked => encode_entities($checked),
                              froms => \@froms};
-    } else {
-        template 'index', { error => "Key niet gevonden" };
-    }
-};
-
-get '/submitted/:ackkey' => sub {
-
-    my $db = connect_db();
-    my $stm = $db->prepare("select * from mbox where ackkey = ?");
-    $stm->execute(param('ackkey'));
-    if (my $row = $stm->fetchrow_hashref()) {
-
-        session ackkey => param('ackkey');
-        session row => $row;
-        template 'submitted', {subject => encode_entities($row->{subject}),
-                             from => encode_entities($row->{new_from_address}),
-                             date => encode_entities($row->{date}),
-                             body => encode_entities($row->{body})};
 
     } else {
         template 'index', { error => "Key niet gevonden" };
@@ -91,7 +91,6 @@ post '/recipients' => sub {
         my @list = sort keys %{ config->{list} };
 
         template 'recipients', {subject => encode_entities($row->{subject}),
-                                date => encode_entities($row->{date}),
                                 new_from => encode_entities($row->{new_from_address}),
                                 list => \@list};
     } else {
@@ -103,7 +102,6 @@ post '/submit' => sub {
 
     if (defined session('row')) {
 
-        my $row = session('row');
         my $db = connect_db();
         my $stm = $db->prepare( config->{sqlite}{update_rcpt} );
         my $recipientlist;
@@ -111,45 +109,108 @@ post '/submit' => sub {
         if (defined params->{adreslijst}) {
 
             $recipientlist = checkemail(params->{adreslijst});
-            session recipients => $recipientlist;
+            session->{row}{recipients} = $recipientlist;
 
         } elsif (defined params->{file}) {
 
             my $file = request->upload('file');
             $recipientlist = checkemail($file->content);
-            session recipients => $recipientlist;
+            session->{row}{recipients} = $recipientlist;
 
         }
+        my $row = session->{row};
 
         if ($recipientlist) {
 
+            unless ($stm->execute($recipientlist,session('key'))) {
+                template 'index', { error => "Fout in update ontvanger adressen" };
+                return;
+            }
             sendNotify();
             template 'submit', {subject => encode_entities($row->{subject}),
-                                date => encode_entities($row->{date}),
                                 new_from => encode_entities($row->{new_from_address}),
                                 authorize_by => encode_entities( config->{authorize_by} ),
-                                recipients => encode_entities( session->{recipients} )}
+                                rcpt => encode_entities( session->{recipients} )}
 
         } else {
-            template 'index', { error => "Error in submitted form, no recipients found" };
+            template 'index', { error => "Error in formulier, geen ontvangers gevonden" };
         }
 
     } else {
-        template 'index', { error => "Session key not found" };
+        template 'index', { error => "Sessie key niet gevonden" };
+    }
+};
+
+any ['get', 'post'] => '/submitted/:ackkey' => sub {
+
+    my $db = connect_db();
+    my $stm = $db->prepare("select * from mbox where ackkey = ?");
+    $stm->execute(param('ackkey'));
+    if (my $row = $stm->fetchrow_hashref()) {
+
+        my $message;
+        if (defined param('examplemail')) {
+
+            examplemail( config->{authorize_by} );
+            $message = "Voorbeeld mail verzonder naar ". config->{authorize_by};
+        }
+
+        session ackkey => param('ackkey');
+        session row => $row;
+        template 'submitted', {subject => encode_entities($row->{subject}),
+                               from => encode_entities($row->{new_from_address}),
+                               rcpt => encode_entities($row->{recipients}),
+                               message => encode_entities($message),
+                               body => encode_entities($row->{body})};
+
+    } else {
+        template 'index', { error => "Key niet gevonden" };
     }
 };
 
 any qr{.*} => sub {
     status 'not_found';
-    template 'index', { error => "404 Not Found" };
+    template 'index', { error => "404 Niet gevonden" };
 };
 
 sub checkemail {
 
     # evaluate email addresses by parsing and formatting
     my $recipients = shift;
-    $recipients = s/\r?\n/, /;
-    return format_email_addresses(parse_email_addresses($recipients));
+    $recipients =~ s/\r?\n/, /g;
+    my @RCPT = Email::Address::XS->parse($recipients);
+    my @parsed;
+    for my $email (@RCPT) {
+        push @parsed, $email->{original} unless defined $email->{invalid};
+    }
+    return join ', ', @parsed;
+}
+
+sub examplemail {
+
+    my $to = shift;
+    my $row = session->{row};
+    my @RCPT = split /\r?\n/, session('recipients');
+    my @rcptlist;
+
+    my $transport = Email::Sender::Transport::SMTP->new({
+        host => config->{smtp}{host},
+        ssl => config->{smtp}{ssl},
+        SSL_verify_mode => SSL_VERIFY_NONE,
+        sasl_username => config->{smtp}{user},
+        sasl_password => config->{smtp}{pass},
+    });
+    my $reply = Email::Simple->create(
+        header => [
+            To      => $to,
+            From    => session->{row}{new_from_address},
+            Subject => $row->{subject},
+        ],
+        body => $row->{body},
+    );
+
+    sendmail($reply, { transport => $transport });
+    debug( "Example to ". $reply->header("To") ." send\n");
 }
 
 sub sendReceipt {
@@ -162,7 +223,6 @@ sub sendReceipt {
         SSL_verify_mode => SSL_VERIFY_NONE,
         sasl_username => config->{smtp}{user},
         sasl_password => config->{smtp}{pass},
-        debug => 1,
     });
     my $reply = Email::Simple->create(
         header => [
@@ -179,24 +239,16 @@ sub sendReceipt {
 
 sub sendNotify {
 
-    if (defined session('selfrom') and defined session('row')) {
+    if (defined session('row')) {
 
         my $row = session('row');
-        my $selfrom = session('selfrom');
         my @RCPT = split /\r?\n/, session('recipients');
         my @rcptlist;
-
-        if ($selfrom eq "lists") {
-
-            for (@RCPT) {
-                push @rcptlist, (sprintf "%s\t%s\n", $_, config->{lists}{$_}) if defined config->{lists}{$_};
-            }
-        }
 
         my $transport = Email::Sender::Transport::SMTP->new({
             host => config->{smtp}{host},
             ssl => config->{smtp}{ssl},
-            SSL_verify_mode => 0,
+            SSL_verify_mode => SSL_VERIFY_NONE,
             sasl_username => config->{smtp}{user},
             sasl_password => config->{smtp}{pass},
         });
@@ -208,7 +260,6 @@ sub sendNotify {
             ],
             body => template 'sendntfy', { myurl => config->{myurl},
                                            ackkey => $row->{ackkey},
-                                           selfrom => $selfrom,
                                            rcpt => \@RCPT,
                                            addr => \@rcptlist }, { layout => undef },
         );
