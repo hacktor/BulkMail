@@ -9,6 +9,8 @@
     <div id="bodytext">
       <h1>Ontvangen Email:</h1>
 
+      <% IF message %><h2><% message %></h2><% END %>
+
       <div id="maintext-highlight">
         <table>
           <tr><td><b>Afzender</b></td><td><% from %></td></tr>
@@ -17,26 +19,27 @@
         </table>
       </div>
 
-      <br /><button onclick="toggleMail()">Toggle Mailbody</button>
+      <p><button onclick="toggleHide('mailbody')">Laat ruwe mail zien</button></p>
       <div id="mailbody" class=preformatted-body style="display: none">
-        <% body %>
+<% body %>
       </div>
 
       <form action="/recipients" method=POST>
       <div class="normal-content">
         <h3>Selecteer afzender adres</h3>
         <div class="radio">
-           <p><input type="radio" name="afz" value="<% from %>" checked>
+           <p><input type="radio" name="afz" value="<% from %>"<% IF from == checked %> checked<% END %>>
            <span><% from %></span></p>
 <% FOREACH f IN froms %>
-           <p><input type="radio" name="afz" value="<% f %>">
+           <p><input type="radio" name="afz" value="<% f %>"<% IF f == checked %> checked<% END %>>
            <span><% f %></span></p>
 <% END %>
         </div>
       </div>
 
       <div class="normal-content">
-        <h3><input type="submit" value="Ga naar geadresseerden"></h3>
+        <p><button type=submit name=examplemail formaction="">Stuur mail als voorbeeld terug</button>
+        <input type="submit" value="Ga naar geadresseerden"></p>
       </div>
       </form>
     </div>
