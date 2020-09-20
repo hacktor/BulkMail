@@ -3,7 +3,7 @@ Een mail van <% from %> met onderwerp:
 
 <% subject %>
 
-Staat klaar om verzonder te worden naar: <% selfrom %> <% recipients %>
+Staat klaar om verzonder te worden.
 
 Authoriseer deze mailing via onderstaande url:
 

@@ -13,12 +13,11 @@
             <table>
               <tr><td><b>Afzender</b></td><td><% new_from %></td></tr>
               <tr><td><b>Onderwerp</b></td><td><% subject %></td></tr>
-              <tr><td><b>Datum</b></td><td><% date %></td></tr>
             </table>
           </div>
 
           <br />
-          <h1>Selecteer groep(en) geadresseerden</h1>
+          <h1>Selecteer geadresseerden</h1>
   
           <form action="/submit" method="POST" id="showhideform">
    
@@ -27,15 +26,19 @@
                    <option value="1">Adreslijst invoeren</option>
                    <option value="2">Adreslijst uploaden</option>
             </select>
+            <br />
   
             <div id="div1">
-              <textarea name="adreslijst" cols="80" rows="40"></textarea>
-              <input type="submit" name="invoer" value="Verzend">
+              <p><h2>Voer email adressen in, één per regel</h2></p>
+              <p><textarea name="adreslijst" cols="80" rows="40"></textarea></p>
+              <p><input type="submit" name="invoer" value="Verzend"></p>
             </div>
   
             <div id="div2">
-              <input type="file" name="file">
-              <input type="submit" name="upload" value="Upload">
+              <p><h2>Upload een text file met email adressen, één per regel</h2>
+              Let op: geen Word of Excel bestanden</p>
+              <p><input type="file" name="file"></p>
+              <p><input type="submit" name="upload" value="Upload"></p>
             </div>
   
           </form>

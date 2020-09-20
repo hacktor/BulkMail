@@ -9,25 +9,27 @@
     <div id="bodytext">
       <h1>Ontvangen Email:</h1>
 
+      <% IF message %><h2><% message %></h2><% END %>
+
       <div id="maintext-highlight">
         <table>
           <tr><td><b>Afzender</b></td><td><% from %></td></tr>
           <tr><td><b>Onderwerp</b></td><td><% subject %></td></tr>
-          <tr><td><b>Datum</b></td><td><% date %></td></tr>
         </table>
       </div>
 
-      <br /><button onclick="toggleMail()">Toggle Mailbody</button>
-      <div id="mailbody" class=preformatted-body style="display: none">
-        <% body %>
-      </div>
+      <p><button onclick="toggleHide('mailbody')">Ruwe mail inhoud</button>
+      <button onclick="toggleHide('rcpt')">Ontvangers</button></p>
+      <div id="mailbody" class=preformatted-body style="display: none"><% body %></div>
+      <div id="rcpt" class=preformatted-body style="display: none"><% rcpt %></div>
 
       <form action="/done" method=POST>
       <div class="normal-content">
       </div>
 
       <div class="normal-content">
-        <h3><input type="submit" value="Geef mailing vrij voor verzenden"></h3>
+        <p><button type=submit name=examplemail formaction="">Stuur mail als voorbeeld</button>
+        <input type="submit" value="Geef mailing vrij voor verzenden"></p>
       </div>
       </form>
     </div>
