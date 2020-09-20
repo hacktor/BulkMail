@@ -1,5 +1,5 @@
-function toggleMail() {
-  var x = document.getElementById('mailbody');
+function toggleHide(id) {
+  var x = document.getElementById(id);
   if (x.style.display === "none") {
     x.style.display = "block";
   } else {
