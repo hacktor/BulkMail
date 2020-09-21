@@ -91,6 +91,7 @@ post '/recipients' => sub {
         my @list = sort keys %{ config->{list} };
 
         template 'recipients', {subject => encode_entities($row->{subject}),
+                                from => encode_entities($row->{from_address}),
                                 new_from => encode_entities($row->{new_from_address}),
                                 list => \@list};
     } else {
@@ -106,15 +107,17 @@ post '/submit' => sub {
         my $stm = $db->prepare( config->{sqlite}{update_rcpt} );
         my $recipientlist;
 
+        if (my $file = request->upload("file")) {
+
+            $recipientlist = checkemail($file->content);
+            session->{row}{recipients} = $recipientlist;
+            debug("Recipients: " .$recipientlist);
+
+        } 
         if (defined params->{adreslijst}) {
 
-            $recipientlist = checkemail(params->{adreslijst});
-            session->{row}{recipients} = $recipientlist;
-
-        } elsif (defined params->{file}) {
-
-            my $file = request->upload('file');
-            $recipientlist = checkemail($file->content);
+            $recipientlist .= ", " if $recipientlist;
+            $recipientlist .= checkemail(params->{adreslijst});
             session->{row}{recipients} = $recipientlist;
 
         }
@@ -128,9 +131,10 @@ post '/submit' => sub {
             }
             sendNotify();
             template 'submit', {subject => encode_entities($row->{subject}),
+                                from => encode_entities($row->{from_address}),
                                 new_from => encode_entities($row->{new_from_address}),
                                 authorize_by => encode_entities( config->{authorize_by} ),
-                                rcpt => encode_entities( session->{recipients} )}
+                                rcpt => encode_entities( session->{row}{recipients} )}
 
         } else {
             template 'index', { error => "Error in formulier, geen ontvangers gevonden" };
@@ -158,7 +162,8 @@ any ['get', 'post'] => '/submitted/:ackkey' => sub {
         session ackkey => param('ackkey');
         session row => $row;
         template 'submitted', {subject => encode_entities($row->{subject}),
-                               from => encode_entities($row->{new_from_address}),
+                               from => encode_entities($row->{from_address}),
+                               new_from => encode_entities($row->{new_from_address}),
                                rcpt => encode_entities($row->{recipients}),
                                message => encode_entities($message),
                                body => encode_entities($row->{body})};

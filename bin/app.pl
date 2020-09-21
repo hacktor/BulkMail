@@ -23,7 +23,7 @@ threads->create(sub {
                     my $email = Email::Simple->new(join '', @{ $pop->get($msgnum) });
                     my $key = makeKey();
                     my $ackkey = makeKey();
-                    $st->execute($key,$ackkey,$email->header("From"),$email->header("Subject"),$email->header("Date"),$email->body);
+                    $st->execute($key,$ackkey,$email->header("From"),$email->header("Subject"),$email->header("Date"),$email->header("Content-Type"),$email->body);
                     BulkMail::sendReceipt($email,$key);
         
                     $pop->delete($msgnum) or warn("Delete failed");
