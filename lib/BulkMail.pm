@@ -76,24 +76,31 @@ any ['get', 'post'] => '/mailing/:key' => sub {
 
 post '/recipients' => sub {
 
-    if (defined params->{afz}) {
+    if (defined params->{afz} and defined session('key')) {
 
-        # update sqlite database
         my $db = connect_db();
-        my $stm = $db->prepare( config->{sqlite}{update_from} );
-        unless ($stm->execute(param('afz'),session('key'))) {
-            template 'index', { error => "Fout in update afzender adres" };
-            return;
+        my $stm = $db->prepare("select * from mbox where key = ?");
+        $stm->execute(session('key'));
+
+        if (my $row = $stm->fetchrow_hashref()) {
+            # update sqlite database
+            my $stm2 = $db->prepare( config->{sqlite}{update_from} );
+            unless ($stm2->execute(param('afz'),session('key'))) {
+
+                template 'index', { error => "Fout in update afzender adres" };
+                return;
+            }
+
+            my @list = sort keys %{ config->{list} };
+
+            template 'recipients', {subject => encode_entities($row->{subject}),
+                                    from => encode_entities($row->{from_address}),
+                                    new_from => encode_entities(param('afz')),
+                                    list => \@list};
+        } else {
+
+            template 'index', { error => "Fout in nieuw afzender adres" };
         }
-        session->{row}{new_from_address} = param('afz');
-        my $row = session('row');
-
-        my @list = sort keys %{ config->{list} };
-
-        template 'recipients', {subject => encode_entities($row->{subject}),
-                                from => encode_entities($row->{from_address}),
-                                new_from => encode_entities($row->{new_from_address}),
-                                list => \@list};
     } else {
         template 'index', { error => "Fout in nieuw afzender adres" };
     }
@@ -101,45 +108,49 @@ post '/recipients' => sub {
 
 post '/submit' => sub {
 
-    if (defined session('row')) {
+    if (defined session('key')) {
 
         my $db = connect_db();
-        my $stm = $db->prepare( config->{sqlite}{update_rcpt} );
-        my $recipientlist;
+        my $stm = $db->prepare("select * from mbox where key = ?");
+        $stm->execute(session('key'));
 
-        if (my $file = request->upload("file")) {
+        if (my $row = $stm->fetchrow_hashref()) {
 
-            $recipientlist = checkemail($file->content);
-            session->{row}{recipients} = $recipientlist;
-            debug("Recipients: " .$recipientlist);
+            my $stm2 = $db->prepare( config->{sqlite}{update_rcpt} );
+            my $recipientlist;
 
-        } 
-        if (defined params->{adreslijst}) {
+            if (my $file = request->upload("file")) {
 
-            $recipientlist .= ", " if $recipientlist;
-            $recipientlist .= checkemail(params->{adreslijst});
-            session->{row}{recipients} = $recipientlist;
+                $recipientlist = checkemail($file->content);
+                debug("Recipients: " .$recipientlist);
 
-        }
-        my $row = session->{row};
+            } 
+            if (defined params->{adreslijst}) {
 
-        if ($recipientlist) {
+                $recipientlist .= ", " if $recipientlist;
+                $recipientlist .= checkemail(params->{adreslijst});
 
-            unless ($stm->execute($recipientlist,session('key'))) {
-                template 'index', { error => "Fout in update ontvanger adressen" };
-                return;
             }
-            sendNotify();
-            template 'submit', {subject => encode_entities($row->{subject}),
-                                from => encode_entities($row->{from_address}),
-                                new_from => encode_entities($row->{new_from_address}),
-                                authorize_by => encode_entities( config->{authorize_by} ),
-                                rcpt => encode_entities( session->{row}{recipients} )}
 
+            if ($recipientlist) {
+
+                unless ($stm2->execute($recipientlist,session('key'))) {
+                    template 'index', { error => "Fout in update ontvanger adressen" };
+                    return;
+                }
+                sendNotify();
+                template 'submit', {subject => encode_entities($row->{subject}),
+                                    from => encode_entities($row->{from_address}),
+                                    new_from => encode_entities($row->{new_from_address}),
+                                    authorize_by => encode_entities( config->{authorize_by} ),
+                                    rcpt => encode_entities( $recipientlist )}
+
+            } else {
+                template 'index', { error => "Error in formulier, geen ontvangers gevonden" };
+            }
         } else {
-            template 'index', { error => "Error in formulier, geen ontvangers gevonden" };
+            template 'index', { error => "Sessie key niet gevonden in database" };
         }
-
     } else {
         template 'index', { error => "Sessie key niet gevonden" };
     }
@@ -210,6 +221,7 @@ sub examplemail {
             To      => $to,
             From    => session->{row}{new_from_address},
             Subject => $row->{subject},
+            'Content-Type' => $row->{content_type},
         ],
         body => $row->{body},
     );
