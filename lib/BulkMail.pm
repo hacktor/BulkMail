@@ -234,13 +234,14 @@ sub sendReceipt {
 
     my ($email,$key) = @_;
 
-    my $transport = Email::Sender::Transport::SMTP->new({
-        host => config->{smtp}{host},
-        ssl => config->{smtp}{ssl},
-        SSL_verify_mode => SSL_VERIFY_NONE,
-        sasl_username => config->{smtp}{user},
-        sasl_password => config->{smtp}{pass},
-    });
+    my $transport = (defined config->{smtp}{ssl} and config->{smtp}{ssl}) ?
+        Email::Sender::Transport::SMTP->new({
+            host => config->{smtp}{host},
+            ssl => config->{smtp}{ssl},
+            SSL_verify_mode => SSL_VERIFY_NONE,
+            sasl_username => config->{smtp}{user},
+            sasl_password => config->{smtp}{pass}, }) :
+        Email::Sender::Transport::SMTP->new({host => config->{smtp}{host}});
     my $reply = Email::Simple->create(
         header => [
             To      => $email->header("From"),
@@ -262,13 +263,14 @@ sub sendNotify {
         my @RCPT = split /\r?\n/, session('recipients');
         my @rcptlist;
 
-        my $transport = Email::Sender::Transport::SMTP->new({
-            host => config->{smtp}{host},
-            ssl => config->{smtp}{ssl},
-            SSL_verify_mode => SSL_VERIFY_NONE,
-            sasl_username => config->{smtp}{user},
-            sasl_password => config->{smtp}{pass},
-        });
+        my $transport = (defined config->{smtp}{ssl} and config->{smtp}{ssl}) ?
+            Email::Sender::Transport::SMTP->new({
+                host => config->{smtp}{host},
+                ssl => config->{smtp}{ssl},
+                SSL_verify_mode => SSL_VERIFY_NONE,
+                sasl_username => config->{smtp}{user},
+                sasl_password => config->{smtp}{pass}, }) :
+            Email::Sender::Transport::SMTP->new({host => config->{smtp}{host}});
         my $reply = Email::Simple->create(
             header => [
                 To      => config->{authorize_by},

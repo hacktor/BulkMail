@@ -3,7 +3,7 @@ use utf8;
 use Dancer;
 use BulkMail;
 use threads;
-use Net::POP3;
+use Mail::IMAPClient;
 use Email::Simple;
 
 # create a thread polling for new mail
@@ -14,26 +14,36 @@ threads->create(sub {
 
     for (;;) {
         eval {
-            my $pop = Net::POP3->new(config->{pop3}{host}, SSL => 1, SSL_verify_mode => 0, SSL_ca_file => config->{pop3}{ca});
-            if (defined $pop and $pop->login(config->{pop3}{user}, config->{pop3}{pass}) > 0) {
+            my $imap = Mail::IMAPClient->new(
+                Server   => config->{imap}{host},
+                User     => config->{imap}{user},
+                Password => config->{imap}{pass},
+                Ssl => 1,
+                Uid => 1,
+                SSL_ca_file => config->{imap}{ca});
+
+            if ($imap->select('INBOX')) {
         
-                my $msgnums = $pop->list; # hashref of msgnum => size
-                foreach my $msgnum (keys %$msgnums) {
+                my $msgnums = $imap->messages; #array
+                foreach my $msgnum (@$msgnums) {
         
-                    my $email = Email::Simple->new(join '', @{ $pop->get($msgnum) });
+                    my $email = Email::Simple->new($imap->message_string($msgnum));
                     my $key = makeKey();
                     my $ackkey = makeKey();
                     $st->execute($key,$ackkey,$email->header("From"),$email->header("Subject"),$email->header("Date"),$email->header("Content-Type"),$email->body);
                     BulkMail::sendReceipt($email,$key);
+
+                    # move the mail to the 'DONE' folder
+                    $imap->expunge if $imap->move( 'DONE', $msgnum );
         
-                    $pop->delete($msgnum) or warn("Delete failed");
-                    $pop->quit;
                 }
-            } elsif (not defined $pop) {
-                warning("POP3 connection fail");
+
+            } elsif (not defined $imap) {
+                warning("IMAP connection fail");
             } else {
-                $pop->quit;
+                warning("INBOX not found");
             }
+            $imap->logout if $imap;
         };
         warn($@) if $@;
         sleep 30;
