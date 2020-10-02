@@ -44,7 +44,7 @@ sqlite:
           key text primary key,
           timestamp text,
           recipient text,
-          failed bool,
-          delivered bool
+          failed bool default false,
+          delivered bool default false
         );
 
