@@ -22,24 +22,29 @@ sqlite:
     insert: 'insert into mbox (key,ackkey,from_address,subject,date,content_type,body) values (?,?,?,?,?,?,?)'
     update_from: 'update mbox set new_from_address = ? where key = ?'
     update_rcpt: 'update mbox set recipients = ? where key = ?'
-    schema: >
-      CREATE TABLE IF NOT EXISTS mbox (
-        key text primary key,
-        ackkey text unique,
-        from_address text,
-        new_from_address text,
-        subject text,
-        date text,
-        content_type text,
-        body text,
-        recipients text,
-        status text,
-        schedule text
-      );
-      CREATE TABLE IF NOT EXISTS deliver (
-        key text primary key,
-        timestamp text,
-        recipient text,
-        delivered bool
-      );
+    tables:
+    - name: mbox
+      schema: >
+        CREATE TABLE IF NOT EXISTS mbox (
+          key text primary key,
+          ackkey text unique,
+          from_address text,
+          new_from_address text,
+          subject text,
+          date text,
+          content_type text,
+          body text,
+          recipients text,
+          status text,
+          schedule text
+        );
+    - name: deliver
+      schema: >
+        CREATE TABLE IF NOT EXISTS deliver (
+          key text primary key,
+          timestamp text,
+          recipient text,
+          failed bool,
+          delivered bool
+        );
 

@@ -23,7 +23,10 @@ sub connect_db {
 sub init_db {
     my $db = connect_db();
 
-    $db->do( config->{sqlite}{schema} ) or die $db->errstr;
+    for my $table ( @{ config->{sqlite}{tables} } ) {
+        debug("Table: $table->{name}\n");
+        $db->do($table->{schema}) or die $db->errstr;
+    }
     return $db;
 }
 
