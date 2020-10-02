@@ -187,6 +187,27 @@ any ['get', 'post'] => '/submitted/:ackkey' => sub {
     }
 };
 
+post '/done' => sub {
+
+    if (defined session('ackkey')) {
+
+        my $db = connect_db();
+        my $stm = $db->prepare("select * from mbox where ackkey = ?");
+        $stm->execute(session('ackkey'));
+
+        if (my $row = $stm->fetchrow_hashref()) {
+
+            template 'done', {subject => encode_entities($row->{subject}),
+                              from => encode_entities($row->{from_address}),
+                              new_from => encode_entities($row->{new_from_address})};
+        } else {
+            template 'index', { error => "Key niet gevonden in database" };
+        }
+    } else {
+        template 'index', { error => "Key niet gevonden" };
+    }
+};
+
 any qr{.*} => sub {
     status 'not_found';
     template 'index', { error => "404 Niet gevonden" };
