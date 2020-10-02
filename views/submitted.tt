@@ -30,7 +30,7 @@
 
       <div class="normal-content">
         <p><button type=submit name=examplemail formaction="">Stuur mail als voorbeeld</button>
-        <input type="submit" value="Geef mailing vrij voor verzenden"></p>
+        <input type="submit" name="authorize" value="Geef mailing vrij voor verzenden"></p>
       </div>
       </form>
     </div>
