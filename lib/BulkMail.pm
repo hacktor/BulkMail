@@ -27,7 +27,6 @@ sub init_db {
         debug("Table: $table->{name}\n");
         $db->do($table->{schema}) or die $db->errstr;
     }
-    return $db;
 }
 
 sub flatten {
