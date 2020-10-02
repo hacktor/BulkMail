@@ -22,6 +22,14 @@ sqlite:
     insert: 'insert into mbox (key,ackkey,from_address,subject,date,content_type,body) values (?,?,?,?,?,?,?)'
     update_from: 'update mbox set new_from_address = ? where key = ?'
     update_rcpt: 'update mbox set recipients = ? where key = ?'
+
+    poll_mailings: 'select * from mailings where status = 0'
+    lock_mailing: 'update mailings set timestamp = ?, status = ? where key = ?'
+    update_delivered: 'update mailings set delivered = ? where key = ?'
+    update_failed: 'update mailings set failed = ? where key = ?'
+    get_delivered: 'select delivered from mailings where key = ?'
+    get_failed: 'select failed from mailings where key = ?'
+
     tables:
     - name: mbox
       schema: >
@@ -34,17 +42,16 @@ sqlite:
           date text,
           content_type text,
           body text,
-          recipients text,
-          status text,
-          schedule text
+          recipients text
         );
-    - name: deliver
+    - name: mailings
       schema: >
-        CREATE TABLE IF NOT EXISTS deliver (
+        CREATE TABLE IF NOT EXISTS mailings (
           key text primary key,
           timestamp text,
-          recipient text,
-          failed bool default false,
+          delivered text,
+          failed text,
+          status int default 0,
           delivered bool default false
         );
 
