@@ -317,10 +317,14 @@ sub mailing {
     return unless $mailing->{key};
 
     my $db = BulkMail::connect_db();
-    $db->do( config->{sqlite}{update_status} );
+    my $stm = $db->prepare( config->{sqlite}{update_status} );
+    unless ($stm->execute(1)) {
+        debug("Mailing status update failed, not sending");
+        return;
+    }
 
     # get mail info
-    my $stm = $db->prepare( config->{sqlite}{get_mail} );
+    $stm = $db->prepare( config->{sqlite}{get_mail} );
     $stm->execute($mailing->{key});
     if (my $mail = $stm->fetchrow_hashref) {
 
