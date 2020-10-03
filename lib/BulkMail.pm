@@ -29,10 +29,6 @@ sub init_db {
     }
 }
 
-sub flatten {
-  map { ref $_ ? flatten(@{$_}) : $_ } @_;
-}
-
 any ['get', 'post'] => '/mailing/:key' => sub {
 
     my $db = connect_db();
