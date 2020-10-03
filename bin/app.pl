@@ -5,11 +5,6 @@ use BulkMail;
 use threads;
 use Mail::IMAPClient;
 use Email::Simple;
-use Email::Sender::Simple qw(sendmail);
-use Email::Simple::Creator;
-use Email::Sender::Transport::Mbox;
-use Email::Sender::Transport::SMTP;
-use Email::Address::XS qw(parse_email_addresses format_email_addresses);
 use IO::Socket::SSL;
 
 # initialize (create if not exists) database
@@ -68,62 +63,10 @@ threads->create(sub {
     for (;;) {
         # get mailings with status 0
         $stm->execute(0);
-        mailing($_) for $stm->fetchrow_hashref;
+        BulkMail::mailing($_) for $stm->fetchrow_hashref;
         sleep 60;
     }
 })->detach();
-
-sub mailing {
-
-    my $mailing = shift;
-    return unless $mailing->{key};
-
-    my $db = BulkMail::connect_db();
-    $db->do( config->{sqlite}{update_status} );
-
-    # get mail info
-    my $stm = $db->prepare( config->{sqlite}{get_mail} );
-    $stm->execute($mailing->{key});
-    if (my $mail = $stm->fetchrow_hashref) {
-
-        my @RCPT = Email::Address::XS->parse($mail->{recipients});
-        my ($failed, $delivered);
-        my $std = $db->prepare( config->{sqlite}{update_delivered} );
-        my $stf = $db->prepare( config->{sqlite}{update_failed} );
-
-        for (@RCPT) {
-            my $to = $_->format();
-            my $transport = Email::Sender::Transport::SMTP->new({
-                host => config->{smtp}{host},
-                ssl => config->{smtp}{ssl},
-                SSL_verify_mode => SSL_VERIFY_NONE,
-                sasl_username => config->{smtp}{user},
-                sasl_password => config->{smtp}{pass},
-            });
-            my $reply = Email::Simple->create(
-                header => [
-                    To      => $to,
-                    From    => $mail->{new_from_address},
-                    Subject => $mail->{subject},
-                    'Content-Type' => $mail->{content_type},
-                ],
-                body => $mail->{body},
-            );
-
-            eval {
-                sendmail($reply, { transport => $transport });
-            };
-            if ($@) {
-                $failed .= ($failed) ? ", $to" : $to;
-                $stf->execute($failed,$mailing->{key});
-            } else {
-                $delivered .= ($delivered) ? ", $to" : $to;
-                $std->execute($delivered,$mailing->{key});
-            }
-            debug( "Sent to ". $reply->header("To") ." send\n");
-        }
-    }
-}
 
 dance;
 
