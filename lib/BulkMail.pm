@@ -5,7 +5,6 @@ use HTML::Entities;
 use Email::Simple;
 use Email::Sender::Simple qw(sendmail);
 use Email::Simple::Creator;
-use Email::Sender::Transport::Mbox;
 use Email::Sender::Transport::SMTP;
 use Email::Address::XS qw(parse_email_addresses format_email_addresses);
 use IO::Socket::SSL;
@@ -24,7 +23,6 @@ sub init_db {
     my $db = connect_db();
 
     for my $table ( @{ config->{sqlite}{tables} } ) {
-        debug("Table: $table->{name}\n");
         $db->do($table->{schema}) or die $db->errstr;
     }
 }
@@ -42,14 +40,14 @@ any ['get', 'post'] => '/mailing/:key' => sub {
         if (defined param('afz') and defined param('examplemail')) {
 
             my $stm = $db->prepare( config->{sqlite}{update_from} );
-            unless ($stm->execute(param('afz'),session('key'))) {
+            unless ($stm->execute(param('afz'),session->{key})) {
                 template 'index', { error => "Fout in update afzender adres" };
                 return;
             }
 
             $checked = param('afz');
-            session->{row}{new_from_address} = param('afz');
-            examplemail($row->{from_address});
+            $row->{new_from_address} = param('afz');
+            examplemail($row->{from_address},$row);
             $message = "Voorbeeld mail verzonder naar $row->{from_address}";
         }
         my @froms;
@@ -58,7 +56,6 @@ any ['get', 'post'] => '/mailing/:key' => sub {
         }
 
         session key => param('key');
-        session row => $row;
         template 'mailing', {subject => encode_entities($row->{subject}),
                              from => encode_entities($row->{from_address}),
                              date => encode_entities($row->{date}),
@@ -74,16 +71,16 @@ any ['get', 'post'] => '/mailing/:key' => sub {
 
 post '/recipients' => sub {
 
-    if (defined params->{afz} and defined session('key')) {
+    if (defined params->{afz} and defined session->{key}) {
 
         my $db = connect_db();
         my $stm = $db->prepare("select * from mbox where key = ?");
-        $stm->execute(session('key'));
+        $stm->execute(session->{key});
 
         if (my $row = $stm->fetchrow_hashref()) {
             # update sqlite database
             my $stm2 = $db->prepare( config->{sqlite}{update_from} );
-            unless ($stm2->execute(param('afz'),session('key'))) {
+            unless ($stm2->execute(param('afz'),session->{key})) {
 
                 template 'index', { error => "Fout in update afzender adres" };
                 return;
@@ -106,11 +103,11 @@ post '/recipients' => sub {
 
 post '/submit' => sub {
 
-    if (defined session('key')) {
+    if (defined session->{key}) {
 
         my $db = connect_db();
         my $stm = $db->prepare("select * from mbox where key = ?");
-        $stm->execute(session('key'));
+        $stm->execute(session->{key});
 
         if (my $row = $stm->fetchrow_hashref()) {
 
@@ -132,11 +129,12 @@ post '/submit' => sub {
 
             if ($recipientlist) {
 
-                unless ($stm2->execute($recipientlist,session('key'))) {
+                unless ($stm2->execute($recipientlist,session->{key})) {
                     template 'index', { error => "Fout in update ontvanger adressen" };
                     return;
                 }
-                sendNotify();
+                $row->{recipients} = $recipientlist;
+                sendNotify($row);
                 template 'submit', {subject => encode_entities($row->{subject}),
                                     from => encode_entities($row->{from_address}),
                                     new_from => encode_entities($row->{new_from_address}),
@@ -164,12 +162,11 @@ any ['get', 'post'] => '/submitted/:ackkey' => sub {
         my $message;
         if (defined param('examplemail')) {
 
-            examplemail( config->{authorize_by} );
+            examplemail( config->{authorize_by}, $row );
             $message = "Voorbeeld mail verzonder naar ". config->{authorize_by};
         }
 
         session ackkey => param('ackkey');
-        session row => $row;
         template 'submitted', {subject => encode_entities($row->{subject}),
                                from => encode_entities($row->{from_address}),
                                new_from => encode_entities($row->{new_from_address}),
@@ -184,13 +181,20 @@ any ['get', 'post'] => '/submitted/:ackkey' => sub {
 
 post '/done' => sub {
 
-    if (defined session('ackkey')) {
+    if (defined session->{ackkey}) {
 
         my $db = connect_db();
         my $stm = $db->prepare("select * from mbox where ackkey = ?");
-        $stm->execute(session('ackkey'));
+        $stm->execute(session->{ackkey});
 
         if (my $row = $stm->fetchrow_hashref()) {
+
+            # store the mailing to be picked up by the mailer thread
+            $stm = $db->prepare(config->{sqlite}{insert_mailing});
+            unless ($stm->execute($row->{key})) {
+                template 'index', { error => "Fout in klaarzetten mailing" };
+                return;
+            }
 
             template 'done', {subject => encode_entities($row->{subject}),
                               from => encode_entities($row->{from_address}),
@@ -224,21 +228,21 @@ sub checkemail {
 sub examplemail {
 
     my $to = shift;
-    my $row = session->{row};
-    my @RCPT = split /\r?\n/, session('recipients');
-    my @rcptlist;
+    my $row = shift;
 
-    my $transport = Email::Sender::Transport::SMTP->new({
-        host => config->{smtp}{host},
-        ssl => config->{smtp}{ssl},
-        SSL_verify_mode => SSL_VERIFY_NONE,
-        sasl_username => config->{smtp}{user},
-        sasl_password => config->{smtp}{pass},
-    });
+    my $transport = (defined config->{smtp}{ssl} and config->{smtp}{ssl}) ?
+        Email::Sender::Transport::SMTP->new({
+            host => config->{smtp}{host},
+            ssl => config->{smtp}{ssl},
+            SSL_verify_mode => SSL_VERIFY_NONE,
+            sasl_username => config->{smtp}{user},
+            sasl_password => config->{smtp}{pass}, }) :
+        Email::Sender::Transport::SMTP->new({host => config->{smtp}{host}});
+
     my $reply = Email::Simple->create(
         header => [
             To      => $to,
-            From    => session->{row}{new_from_address},
+            From    => $row->{new_from_address},
             Subject => $row->{subject},
             'Content-Type' => $row->{content_type},
         ],
@@ -276,11 +280,10 @@ sub sendReceipt {
 
 sub sendNotify {
 
-    if (defined session('row')) {
+    my $row = shift;
+    if (defined $row) {
 
-        my $row = session('row');
-        my @RCPT = split /\r?\n/, session('recipients');
-        my @rcptlist;
+        my @rcptlist = split /, /, $row->{recipients};
 
         my $transport = (defined config->{smtp}{ssl} and config->{smtp}{ssl}) ?
             Email::Sender::Transport::SMTP->new({
@@ -298,7 +301,6 @@ sub sendNotify {
             ],
             body => template 'sendntfy', { myurl => config->{myurl},
                                            ackkey => $row->{ackkey},
-                                           rcpt => \@RCPT,
                                            addr => \@rcptlist }, { layout => undef },
         );
 
@@ -309,17 +311,57 @@ sub sendNotify {
     }
 }
 
+sub mailing {
 
-true;
+    my $mailing = shift;
+    return unless $mailing->{key};
 
-__END__
-        if ( defined config->{email}{trans} and config->{email}{trans} eq 'smtp' ) {
-            $transport = Email::Sender::Transport::SMTP->new({
+    my $db = BulkMail::connect_db();
+    $db->do( config->{sqlite}{update_status} );
+
+    # get mail info
+    my $stm = $db->prepare( config->{sqlite}{get_mail} );
+    $stm->execute($mailing->{key});
+    if (my $mail = $stm->fetchrow_hashref) {
+
+        my @RCPT = Email::Address::XS->parse($mail->{recipients});
+        my ($failed, $delivered);
+        my $std = $db->prepare( config->{sqlite}{update_delivered} );
+        my $stf = $db->prepare( config->{sqlite}{update_failed} );
+
+        for (@RCPT) {
+            my $to = $_->format();
+            my $transport = Email::Sender::Transport::SMTP->new({
                 host => config->{smtp}{host},
                 ssl => config->{smtp}{ssl},
+                SSL_verify_mode => SSL_VERIFY_NONE,
                 sasl_username => config->{smtp}{user},
                 sasl_password => config->{smtp}{pass},
             });
-        } else {
-            $transport = Email::Sender::Transport::Mbox->new();
+            my $reply = Email::Simple->create(
+                header => [
+                    To      => $to,
+                    From    => $mail->{new_from_address},
+                    Subject => $mail->{subject},
+                    'Content-Type' => $mail->{content_type},
+                ],
+                body => $mail->{body},
+            );
+
+            eval {
+                sendmail($reply, { transport => $transport });
+            };
+            if ($@) {
+                $failed .= ($failed) ? ", $to" : $to;
+                $stf->execute($failed,$mailing->{key});
+            } else {
+                $delivered .= ($delivered) ? ", $to" : $to;
+                $std->execute($delivered,$mailing->{key});
+            }
+            debug( "Sent to ". $reply->header("To") ." send\n");
         }
+    }
+}
+
+true;
+
