@@ -331,13 +331,14 @@ sub mailing {
 
         for (@RCPT) {
             my $to = $_->format();
-            my $transport = Email::Sender::Transport::SMTP->new({
-                host => config->{smtp}{host},
-                ssl => config->{smtp}{ssl},
-                SSL_verify_mode => SSL_VERIFY_NONE,
-                sasl_username => config->{smtp}{user},
-                sasl_password => config->{smtp}{pass},
-            });
+            my $transport = (defined config->{smtp}{ssl} and config->{smtp}{ssl}) ?
+                Email::Sender::Transport::SMTP->new({
+                    host => config->{smtp}{host},
+                    ssl => config->{smtp}{ssl},
+                    SSL_verify_mode => SSL_VERIFY_NONE,
+                    sasl_username => config->{smtp}{user},
+                    sasl_password => config->{smtp}{pass}, }) :
+                Email::Sender::Transport::SMTP->new({host => config->{smtp}{host}});
             my $reply = Email::Simple->create(
                 header => [
                     To      => $to,
