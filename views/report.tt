@@ -1,0 +1,22 @@
+
+De mailing van <% from %> met onderwerp:
+
+<% subject %>
+
+Is verzonden met afzender adres <% new_from %>.
+
+--------------------
+Niet verzonden: <% nrfail %>
+<% FOREACH a in failed %>
+<% a %>
+<% END %>
+
+--------------------
+Verzonden: <% nrdeliver %>
+
+<% FOREACH a in delivered %>
+<% a %>
+<% END %>
+
+
+

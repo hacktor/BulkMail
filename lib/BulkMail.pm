@@ -225,19 +225,28 @@ sub checkemail {
     return join ', ', @parsed;
 }
 
-sub examplemail {
+sub transport {
 
-    my $to = shift;
-    my $row = shift;
+    # return Email::Sender::Transport object
+    if (defined config->{smtp}{ssl} and config->{smtp}{ssl}) {
 
-    my $transport = (defined config->{smtp}{ssl} and config->{smtp}{ssl}) ?
-        Email::Sender::Transport::SMTP->new({
+        return Email::Sender::Transport::SMTP->new({
             host => config->{smtp}{host},
             ssl => config->{smtp}{ssl},
             SSL_verify_mode => SSL_VERIFY_NONE,
             sasl_username => config->{smtp}{user},
-            sasl_password => config->{smtp}{pass}, }) :
-        Email::Sender::Transport::SMTP->new({host => config->{smtp}{host}});
+            sasl_password => config->{smtp}{pass}, });
+    } else {
+
+        return Email::Sender::Transport::SMTP->new({
+            host => config->{smtp}{host}});
+    }
+}
+
+sub examplemail {
+
+    my $to = shift;
+    my $row = shift;
 
     my $reply = Email::Simple->create(
         header => [
@@ -249,7 +258,7 @@ sub examplemail {
         body => $row->{body},
     );
 
-    sendmail($reply, { transport => $transport });
+    sendmail($reply, { transport => transport() });
     debug( "Example to ". $reply->header("To") ." send\n");
 }
 
@@ -257,14 +266,6 @@ sub sendReceipt {
 
     my ($email,$key) = @_;
 
-    my $transport = (defined config->{smtp}{ssl} and config->{smtp}{ssl}) ?
-        Email::Sender::Transport::SMTP->new({
-            host => config->{smtp}{host},
-            ssl => config->{smtp}{ssl},
-            SSL_verify_mode => SSL_VERIFY_NONE,
-            sasl_username => config->{smtp}{user},
-            sasl_password => config->{smtp}{pass}, }) :
-        Email::Sender::Transport::SMTP->new({host => config->{smtp}{host}});
     my $reply = Email::Simple->create(
         header => [
             To      => $email->header("From"),
@@ -274,7 +275,7 @@ sub sendReceipt {
         body => template 'sendrcpt', { myurl => config->{myurl}, key => $key }, { layout => undef },
     );
 
-    sendmail($reply, { transport => $transport });
+    sendmail($reply, { transport => transport() });
     debug( "Reply to ". $reply->header("To") ." send\n");
 }
 
@@ -285,14 +286,6 @@ sub sendNotify {
 
         my @rcptlist = split /, /, $row->{recipients};
 
-        my $transport = (defined config->{smtp}{ssl} and config->{smtp}{ssl}) ?
-            Email::Sender::Transport::SMTP->new({
-                host => config->{smtp}{host},
-                ssl => config->{smtp}{ssl},
-                SSL_verify_mode => SSL_VERIFY_NONE,
-                sasl_username => config->{smtp}{user},
-                sasl_password => config->{smtp}{pass}, }) :
-            Email::Sender::Transport::SMTP->new({host => config->{smtp}{host}});
         my $reply = Email::Simple->create(
             header => [
                 To      => config->{authorize_by},
@@ -304,7 +297,7 @@ sub sendNotify {
                                            addr => \@rcptlist }, { layout => undef },
         );
 
-        sendmail($reply, { transport => $transport });
+        sendmail($reply, { transport => transport() });
         debug("Authorization request to ". $reply->header("To") ." send\n");
     } else {
         debug("Authorization request not send\n");
@@ -317,32 +310,24 @@ sub mailing {
     return unless $mailing->{key};
 
     my $db = BulkMail::connect_db();
-    my $stm = $db->prepare( config->{sqlite}{update_status} );
-    unless ($stm->execute(1,$mailing->{key})) {
+    my $sts = $db->prepare( config->{sqlite}{update_status} );
+    unless ($sts->execute(1,$mailing->{key})) {
         debug("Mailing status update failed, not sending");
         return;
     }
 
     # get mail info
-    $stm = $db->prepare( config->{sqlite}{get_mail} );
+    my $stm = $db->prepare( config->{sqlite}{get_mail} );
     $stm->execute($mailing->{key});
     if (my $mail = $stm->fetchrow_hashref) {
 
         my @RCPT = Email::Address::XS->parse($mail->{recipients});
-        my ($failed, $delivered);
+        my ($failed, $delivered) = ('','');
         my $std = $db->prepare( config->{sqlite}{update_delivered} );
         my $stf = $db->prepare( config->{sqlite}{update_failed} );
 
         for (@RCPT) {
             my $to = $_->format();
-            my $transport = (defined config->{smtp}{ssl} and config->{smtp}{ssl}) ?
-                Email::Sender::Transport::SMTP->new({
-                    host => config->{smtp}{host},
-                    ssl => config->{smtp}{ssl},
-                    SSL_verify_mode => SSL_VERIFY_NONE,
-                    sasl_username => config->{smtp}{user},
-                    sasl_password => config->{smtp}{pass}, }) :
-                Email::Sender::Transport::SMTP->new({host => config->{smtp}{host}});
             my $reply = Email::Simple->create(
                 header => [
                     To      => $to,
@@ -354,7 +339,7 @@ sub mailing {
             );
 
             eval {
-                sendmail($reply, { transport => $transport });
+                sendmail($reply, { transport => transport() });
             };
             if ($@) {
                 $failed .= ($failed) ? ", $to" : $to;
@@ -363,8 +348,35 @@ sub mailing {
                 $delivered .= ($delivered) ? ", $to" : $to;
                 $std->execute($delivered,$mailing->{key});
             }
-            debug( "Sent to ". $reply->header("To") ." send\n");
+            debug("Sent to ". $reply->header("To") ." send\n");
         }
+        # update status to ready
+        $sts->execute(2,$mailing->{key});
+
+        # send report to author and authorizer
+        my @F = split /, /, $failed;
+        my @D = split /, /, $delivered;
+        my $report = Email::Simple->create(
+            header => [
+                To      => $mail->{from_address},
+                From    => 'Bulk mailer <bulk@bulkmail.ict-sys.tudelft.nl>',
+                Cc      => config->{authorize_by},
+                Subject => "Bulkmail rapport",
+            ],
+            body => template 'report', {
+                from => $mail->{from_address},
+                new_from => $mail->{new_from_address},
+                subject => $mail->{subject},
+                nrfail => scalar @F,
+                failed => \@F,
+                nrdeliver => scalar @D,
+                delivered => \@D }, { layout => undef },
+        );
+        eval {
+            sendmail($report, { transport => transport() });
+        };
+        debug($@) if $@;
+        debug("Report sent");
     }
 }
 
