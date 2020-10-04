@@ -318,7 +318,7 @@ sub mailing {
 
     my $db = BulkMail::connect_db();
     my $stm = $db->prepare( config->{sqlite}{update_status} );
-    unless ($stm->execute(1)) {
+    unless ($stm->execute(1,$mailing->{key})) {
         debug("Mailing status update failed, not sending");
         return;
     }
