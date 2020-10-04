@@ -7,7 +7,7 @@
     </div>
 
     <div id="bodytext">
-      <h1>Te versturen Email:</h1>
+      <h1>Mailing wordt verstuurd:</h1>
 
       <% IF message %><h2><% message %></h2><% END %>
 
@@ -19,7 +19,6 @@
         </table>
       </div>
 
-      <h2>Mail wordt vertuurd</h2>
       </form>
     </div>
   </div>
