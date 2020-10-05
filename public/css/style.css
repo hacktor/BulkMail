@@ -3,7 +3,7 @@ body {
 margin: 0;
 margin-bottom: 25px;
 padding: 0;
-background-color: #ddd;
+background-color: #cccccc;
 background-repeat: no-repeat;
 background-position: top left;
 
@@ -36,7 +36,7 @@ margin-right: auto;
 #content {
 background-color: white;
 border: 3px solid #aaa;
-border-top: none;
+margin-top: 30px;
 padding: 25px;
 width: 750px;
 }
@@ -65,8 +65,8 @@ font-size: 16px;
 }
 
 #maintext-highlight {
-background-color: #ffd;
-border: 1px solid #fc0;
+background-color: #cccccc;
+border: 1px solid #aaa;
 margin-left: -11px;
 }
 #maintext-highlight table {
