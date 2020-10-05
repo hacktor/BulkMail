@@ -19,10 +19,13 @@ server_tokens: false
 
 sqlite:
     db: 'emails.db'
+
     insert: 'insert into mbox (key,ackkey,from_address,subject,date,content_type,body) values (?,?,?,?,?,?,?)'
     update_from: 'update mbox set new_from_address = ? where key = ?'
     update_rcpt: 'update mbox set recipients = ? where key = ?'
     get_mail: 'select * from mbox where key = ?'
+    get_mail_byack: 'select * from mbox where ackkey = ?'
+    get_all: 'select id, from_address, new_from_address, subject, date, recipients from mbox'
 
     insert_mailing: 'insert into mailings (key) values (?)' 
     get_mailings: 'select * from mailings where status = ?'
@@ -36,7 +39,8 @@ sqlite:
     - name: mbox
       schema: >
         CREATE TABLE IF NOT EXISTS mbox (
-          key text primary key,
+          id integer primary key,
+          key text unique,
           ackkey text unique,
           from_address text,
           new_from_address text,
@@ -49,7 +53,8 @@ sqlite:
     - name: mailings
       schema: >
         CREATE TABLE IF NOT EXISTS mailings (
-          key text primary key,
+          id integer primary key,
+          key text unique,
           timestamp integer(4) not null default (strftime('%s','now')),
           delivered text default "",
           failed text default "",

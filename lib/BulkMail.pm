@@ -30,7 +30,7 @@ sub init_db {
 any ['get', 'post'] => '/mailing/:key' => sub {
 
     my $db = connect_db();
-    my $stm = $db->prepare("select * from mbox where key = ?");
+    my $stm = $db->prepare( config->{sqlite}{get_mail} );
     $stm->execute(param('key'));
 
     if (my $row = $stm->fetchrow_hashref()) {
@@ -74,7 +74,7 @@ post '/recipients' => sub {
     if (defined params->{afz} and defined session->{key}) {
 
         my $db = connect_db();
-        my $stm = $db->prepare("select * from mbox where key = ?");
+        my $stm = $db->prepare( config->{sqlite}{get_mail} );
         $stm->execute(session->{key});
 
         if (my $row = $stm->fetchrow_hashref()) {
@@ -106,7 +106,7 @@ post '/submit' => sub {
     if (defined session->{key}) {
 
         my $db = connect_db();
-        my $stm = $db->prepare("select * from mbox where key = ?");
+        my $stm = $db->prepare( config->{sqlite}{get_mail} );
         $stm->execute(session->{key});
 
         if (my $row = $stm->fetchrow_hashref()) {
@@ -155,7 +155,7 @@ post '/submit' => sub {
 any ['get', 'post'] => '/submitted/:ackkey' => sub {
 
     my $db = connect_db();
-    my $stm = $db->prepare("select * from mbox where ackkey = ?");
+    my $stm = $db->prepare( config->{sqlite}{get_mail_byack} );
     $stm->execute(param('ackkey'));
     if (my $row = $stm->fetchrow_hashref()) {
 
@@ -184,7 +184,7 @@ post '/done' => sub {
     if (defined session->{ackkey}) {
 
         my $db = connect_db();
-        my $stm = $db->prepare("select * from mbox where ackkey = ?");
+        my $stm = $db->prepare( config->{sqlite}{get_mail_byack} );
         $stm->execute(session->{ackkey});
 
         if (my $row = $stm->fetchrow_hashref()) {
@@ -204,6 +204,34 @@ post '/done' => sub {
         }
     } else {
         template 'index', { error => "Key niet gevonden" };
+    }
+};
+
+any ['get', 'post'] => '/admin' => sub {
+
+    if (defined param('user') and defined param('pass') and
+            param('user') eq config->{admin}{user} and param('pass') eq config->{admin}{pass} ) {
+        session 'login' => 1;
+    }
+    if (defined session->{login}) {
+
+        # gather data
+        my $db = connect_db();
+        my $stm = $db->prepare( config->{sqlite}{get_mailings} );
+        $stm->execute(0);
+        my $ready = $stm->fetchall_hashref('id');
+        $stm->execute(1);
+        my $busy = $stm->fetchall_hashref('id');
+        $stm->execute(2);
+        my $done = $stm->fetchall_hashref('id');
+
+        $stm = $db->prepare( config->{sqlite}{get_all} );
+        $stm->execute();
+        my $all = $stm->fetchall_hashref('id');
+
+        template 'admin', {ready => $ready, busy => $busy, done => $done, all => $all};
+    } else {
+        template 'adminlogin', {};
     }
 };
 
