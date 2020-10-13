@@ -10,7 +10,7 @@ use Email::Address::XS qw(parse_email_addresses format_email_addresses);
 use IO::Socket::SSL;
 use DBI;
 
-our $VERSION = '0.1';
+our $VERSION = '0.2';
 
 sub connect_db {
   my $db = DBI->connect("dbi:SQLite:dbname=".config->{sqlite}{db}) or
