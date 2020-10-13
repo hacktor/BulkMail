@@ -7,6 +7,7 @@ use Email::Sender::Simple qw(sendmail);
 use Email::Simple::Creator;
 use Email::Sender::Transport::SMTP;
 use Email::Address::XS qw(parse_email_addresses format_email_addresses);
+use Spreadsheet::Read;
 use IO::Socket::SSL;
 use DBI;
 
