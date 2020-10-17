@@ -25,21 +25,29 @@
             <select name="selMyList" onchange="showHide(this)">
                    <option value="" selected=1>Maak een keuze</option>
                    <option value="1">Adreslijst invoeren</option>
-                   <option value="2">Adreslijst uploaden</option>
+                   <option value="2">Platte text adreslijst uploaden</option>
+                   <option value="3">Spreadsheet (xls, xlsx, ods of csv) bestand uploaden</option>
             </select>
             <br />
   
             <div id="div1">
               <p><h2>Voer email adressen in, één per regel</h2></p>
               <p><textarea name="adreslijst" cols="80" rows="40"></textarea></p>
-              <p><input type="submit" name="invoer" value="Verzend"></p>
+              <p><input type="submit" value="Verzend"></p>
             </div>
   
             <div id="div2">
-              <p><h2>Upload een text file met email adressen, één per regel</h2>
-              Let op: geen Word of Excel bestanden</p>
-              <p><input type="file" name="file"></p>
-              <p><input type="submit" name="upload" value="Upload"></p>
+              <p><h2>Upload een text bestand met email adressen, één per regel</h2>
+              Let op: hier geen Word of Excel bestanden</p>
+              <p><input type="file" name="text"></p>
+              <p><input type="submit" value="Verzend"></p>
+            </div>
+
+            <div id="div3">
+              <p><h2>Upload een Excel bestand met in de eerste kolom de email adressen</h2>
+              Andere data worden in deze versie van de bulkmailer genegeerd</p>
+              <p><input type="file" name="spread"></p>
+              <p><input type="submit" value="Verzend"></p>
             </div>
   
           </form>

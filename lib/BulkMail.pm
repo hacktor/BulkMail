@@ -114,19 +114,29 @@ post '/submit' => sub {
 
             my $stm2 = $db->prepare( config->{sqlite}{update_rcpt} );
             my $recipientlist;
+            my ($recipients,$doubles);
 
-            if (my $file = request->upload("file")) {
-
-                $recipientlist = checkemail($file->content);
-                debug("Recipients: " .$recipientlist);
-
-            } 
             if (defined params->{adreslijst}) {
 
-                $recipientlist .= ", " if $recipientlist;
-                $recipientlist .= checkemail(params->{adreslijst});
+                my @list =~ split /\r?\n/, params->{adreslijst};
+                $recipients,$doubles = checkemail(@list);
 
             }
+            if (my $file = request->upload("text")) {
+
+                my @list =~ split /\r?\n/, $file->content;
+                $recipients,$doubles = checkemail(@list);
+
+            } 
+            if (my $file = request->upload("spread")) {
+
+                my $column1 = firstcolumn($file);
+                $recipients,$doubles = checkemail($column1);
+                debug("Recipients: " . @$recipients);
+
+            }
+            debug("Recipients: " . $recipients);
+            debug("Doubles " . $doubles);
 
             if ($recipientlist) {
 
@@ -244,14 +254,19 @@ any qr{.*} => sub {
 sub checkemail {
 
     # evaluate email addresses by parsing and formatting
-    my $recipients = shift;
-    $recipients =~ s/\r?\n/, /g;
+    my $rcpt = shift;
+    my ($recipients,$doubles);
+    #$recipients =~ s/\r?\n/, /g;
     my @RCPT = Email::Address::XS->parse($recipients);
     my @parsed;
     for my $email (@RCPT) {
         push @parsed, $email->{original} unless defined $email->{invalid};
     }
     return join ', ', @parsed;
+}
+
+sub firstcolumn {
+
 }
 
 sub transport {
