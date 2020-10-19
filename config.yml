@@ -17,6 +17,13 @@ session_dir: "/tmp/BulkMail-sessions"
 
 server_tokens: false
 
+# supported spreadsheet extensions
+extensions:
+    - csv
+    - xls
+    - xlsx
+    - ods
+
 sqlite:
     db: 'emails.db'
 
