@@ -32,5 +32,5 @@ apt install podman skopeo buildah
 ## start the container
 
 ```bash
-podman run -d --rm -p 3000:3000 -v .:/root --name builmailer localhost/bulkmail
+podman run -d --rm -p 3000:3000 -v .:/root --name bulkmailer localhost/bulkmail
 ```
