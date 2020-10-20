@@ -12,18 +12,28 @@
       <div id="maintext-highlight">
         <table>
           <tr><td><b>Afzender</b></td><td><% from %></td></tr>
-          <tr><td><b>Wordt verstuurd als</b></td><td><% new_from %></td></tr>
+          <tr><td><b>Wordt verstuurd als</b></td><td><% name %></td></tr>
+          <tr><td><b>Reply-To adres</b></td><td><% new_from %></td></tr>
           <tr><td><b>Onderwerp</b></td><td><% subject %></td></tr>
         </table>
       </div>
 
-      <p><button onclick="toggleHide('rcpt')">Laat ontvangers zien</button></p>
-      <div id="rcpt" class=preformatted-body style="display: none">
-<% rcpt %>
-      </div>
+      <p>Aantal email adressen: <% rcptnr %></p>
+      <p>Dubbele adressen: <% dblenr %></p>
+<% if dblenr > 0 %>
+        <pre>
+<% double %>
+        </pre>
+<% end %>
+      <p>Foutieve adressen: <% invanr %></p>
+<% if invanr > 0 %>
+        <pre>
+<% invalid %>
+        </pre>
+<% end %>
 
       <br />
-      <h2>Een mail ter goedgekeuring is verstuurd naar <% authorize_by %></h2>
+      <p>Een mail ter goedgekeuring is verstuurd naar <% authorize_by %></p>
     </div>
   </div>
 </div>

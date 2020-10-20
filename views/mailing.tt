@@ -26,14 +26,18 @@
 
       <form action="/recipients" method=POST>
       <div class="normal-content">
-        <h3>Selecteer afzender adres</h3>
+        <h3>Selecteer Reply-To adres</h3>
         <div class="radio">
-           <p><input type="radio" name="afz" value="<% from %>"<% IF from == checked %> checked<% END %>>
+           <p><input type="radio" name="replyto" value="<% from %>"<% IF from == checked %> checked<% END %>>
            <span><% from %></span></p>
 <% FOREACH f IN froms %>
-           <p><input type="radio" name="afz" value="<% f %>"<% IF f == checked %> checked<% END %>>
+           <p><input type="radio" name="replyto" value="<% f %>"<% IF f == checked %> checked<% END %>>
            <span><% f %></span></p>
 <% END %>
+        </div>
+          
+        <div>
+          <p>Afzender naam in From: <input type="text" name="name" value="TU Bulk Mailer"></p>
         </div>
       </div>
 

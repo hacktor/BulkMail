@@ -4,12 +4,12 @@
 <head>
 <meta http-equiv="Content-type" content="text/html; charset=<% settings.charset %>" />
 <title>BulkMail</title>
-<link rel="stylesheet" href="<% request.uri_base %>/css/style.css" />
+<link rel="stylesheet" href="/css/style.css" />
 
 <script type="text/javascript">/* <![CDATA[ */
-    !window.jQuery && document.write('<script type="text/javascript" src="<% request.uri_base %>/javascripts/jquery.min.js"><\/script>')
+    !window.jQuery && document.write('<script type="text/javascript" src="/javascripts/jquery.min.js"><\/script>')
 /* ]]> */</script>
-<script type="text/javascript" src="<% request.uri_base %>/javascripts/bulk.js"></script>
+<script type="text/javascript" src="/javascripts/bulk.js"></script>
 
 </head>
 <body>

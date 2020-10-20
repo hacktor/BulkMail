@@ -12,7 +12,8 @@
           <div id="maintext-highlight">
             <table>
               <tr><td><b>Afzender</b></td><td><% from %></td></tr>
-              <tr><td><b>Wordt verstuurd van</b></td><td><% new_from %></td></tr>
+              <tr><td><b>Wordt verstuurd als</b></td><td><% new_from %></td></tr>
+              <tr><td><b>Reply-To adres</b></td><td><% replyto %></td></tr>
               <tr><td><b>Onderwerp</b></td><td><% subject %></td></tr>
             </table>
           </div>

@@ -10,6 +10,7 @@ use Email::Address::XS qw(parse_email_addresses format_email_addresses);
 use Spreadsheet::Read;
 use IO::Socket::SSL;
 use DBI;
+use Data::Dumper;
 
 our $VERSION = '0.2';
 
@@ -38,16 +39,17 @@ any ['get', 'post'] => '/mailing/:key' => sub {
 
         my $message;
         my $checked = $row->{from_address};
-        if (defined param('afz') and defined param('examplemail')) {
+        if (defined param('replyto') and defined param('examplemail')) {
 
+            my $name = (defined param('name')) ? param('name') : config->{myname};
             my $stm = $db->prepare( config->{sqlite}{update_from} );
-            unless ($stm->execute(param('afz'),session->{key})) {
-                template 'index', { error => "Fout in update afzender adres" };
+            unless ($stm->execute(param('replyto'),$name,session->{key})) {
+                template 'index', { error => "Fout in update afzender" };
                 return;
             }
 
-            $checked = param('afz');
-            $row->{new_from_address} = param('afz');
+            $checked = param('replyto');
+            $row->{new_from_address} = param('replyto');
             examplemail($row->{from_address},$row);
             $message = "Voorbeeld mail verzonder naar $row->{from_address}";
         }
@@ -72,7 +74,7 @@ any ['get', 'post'] => '/mailing/:key' => sub {
 
 post '/recipients' => sub {
 
-    if (defined params->{afz} and defined session->{key}) {
+    if (defined params->{replyto} and defined session->{key}) {
 
         my $db = connect_db();
         my $stm = $db->prepare( config->{sqlite}{get_mail} );
@@ -80,19 +82,18 @@ post '/recipients' => sub {
 
         if (my $row = $stm->fetchrow_hashref()) {
             # update sqlite database
-            my $stm2 = $db->prepare( config->{sqlite}{update_from} );
-            unless ($stm2->execute(param('afz'),session->{key})) {
+            my $name = (defined params->{name}) ? params->{name} : config->{myname};
+            my $stu = $db->prepare( config->{sqlite}{update_from} );
+            unless ($stu->execute(param('replyto'),$name,session->{key})) {
 
                 template 'index', { error => "Fout in update afzender adres" };
                 return;
             }
 
-            my @list = sort keys %{ config->{list} };
-
             template 'recipients', {subject => encode_entities($row->{subject}),
                                     from => encode_entities($row->{from_address}),
-                                    new_from => encode_entities(param('afz')),
-                                    list => \@list};
+                                    new_from => encode_entities("$name <". config->{myfrom} .">"),
+                                    replyto => encode_entities(param('replyto'))};
         } else {
 
             template 'index', { error => "Fout in nieuw afzender adres" };
@@ -112,45 +113,52 @@ post '/submit' => sub {
 
         if (my $row = $stm->fetchrow_hashref()) {
 
-            my $stm2 = $db->prepare( config->{sqlite}{update_rcpt} );
-            my $recipientlist;
-            my ($recipients,$doubles);
+            my $stu = $db->prepare( config->{sqlite}{update_rcpt} );
+            my $chkres;
 
             if (defined params->{adreslijst}) {
 
-                my @list =~ split /\r?\n/, params->{adreslijst};
-                $recipients,$doubles = checkemail(@list);
+                my @list = split /\r?\n/, params->{adreslijst};
+                $chkres= checkemail(@list);
 
             }
             if (my $file = request->upload("text")) {
 
-                my @list =~ split /\r?\n/, $file->content;
-                $recipients,$doubles = checkemail(@list);
+                my @list = split /\r?\n/, $file->content;
+                $chkres = checkemail(@list);
 
             } 
             if (my $file = request->upload("spread")) {
 
-                my $column1 = firstcolumn($file);
-                $recipients,$doubles = checkemail($column1);
-                debug("Recipients: " . @$recipients);
+                $chkres = checkemail(firstcolumn($file));
 
             }
-            debug("Recipients: " . $recipients);
-            debug("Doubles " . $doubles);
 
-            if ($recipientlist) {
+            my $rcptstr = join ', ', values %{$chkres->{recipients}} if ref $chkres->{recipients} eq "HASH";
+            my $dblestr = join ', ', values %{$chkres->{doubles}} if ref $chkres->{doubles} eq "HASH";
+            my $invastr = join ', ', @{$chkres->{invalid}} if ref $chkres->{invalid} eq "ARRAY";
+            debug("Recipients: " . $rcptstr);
+            debug("Doubles: " . $dblestr);
+            debug("Invalid: " . $invastr);
 
-                unless ($stm2->execute($recipientlist,session->{key})) {
+            if ($rcptstr) {
+
+                unless ($stu->execute($rcptstr,$dblestr,$invastr,session->{key})) {
                     template 'index', { error => "Fout in update ontvanger adressen" };
                     return;
                 }
-                $row->{recipients} = $recipientlist;
+                $row->{recipients} = $rcptstr;
                 sendNotify($row);
                 template 'submit', {subject => encode_entities($row->{subject}),
                                     from => encode_entities($row->{from_address}),
+                                    name => encode_entities($row->{from_name} ." <". config->{myfrom} .">"),
                                     new_from => encode_entities($row->{new_from_address}),
                                     authorize_by => encode_entities( config->{authorize_by} ),
-                                    rcpt => encode_entities( $recipientlist )}
+                                    rcptnr => scalar %{$chkres->{recipients}},
+                                    dblenr => scalar %{$chkres->{doubles}},
+                                    invanr => scalar @{$chkres->{invalid}},
+                                    double => encode_entities( $dblestr ),
+                                    invalid => encode_entities( $invastr )}
 
             } else {
                 template 'index', { error => "Error in formulier, geen ontvangers gevonden" };
@@ -254,19 +262,30 @@ any qr{.*} => sub {
 sub checkemail {
 
     # evaluate email addresses by parsing and formatting
-    my $rcpt = shift;
-    my ($recipients,$doubles);
-    #$recipients =~ s/\r?\n/, /g;
-    my @RCPT = Email::Address::XS->parse($recipients);
-    my @parsed;
-    for my $email (@RCPT) {
-        push @parsed, $email->{original} unless defined $email->{invalid};
+    my @rcpt = @_;
+    my ($recipients,$doubles,$invalid) = ({},{},[]);
+    my @parsed = Email::Address::XS->parse(join ', ', @rcpt);
+    for my $email (@parsed) {
+        if (defined $email->{invalid}) {
+            push @$invalid, $email->{original};
+        } elsif ($recipients->{$email->address}) {
+            $doubles->{$email->address} = $email->format();
+        } else {
+            $recipients->{$email->address} = $email->format();
+        }
     }
-    return join ', ', @parsed;
+    return { recipients => $recipients, doubles => $doubles, invalid => $invalid };
 }
 
 sub firstcolumn {
-
+    my $file = shift;
+    (my $ext = $file->filename) =~ s/.*\.//;
+    if (grep /^$ext$/, @{ config->{extensions} }) {
+        my $book = ReadData($file->content, parser => $ext);
+        my $col = $book->[1]{cell}[1];
+        shift @$col;
+        return @$col;
+    }
 }
 
 sub transport {
@@ -295,8 +314,9 @@ sub examplemail {
     my $reply = Email::Simple->create(
         header => [
             To      => $to,
-            From    => $row->{new_from_address},
+            From    => config->{myfrom},
             Subject => $row->{subject},
+            'Reply-To' => $row->{new_from_address},
             'Content-Type' => $row->{content_type},
         ],
         body => $row->{body},
@@ -313,7 +333,7 @@ sub sendReceipt {
     my $reply = Email::Simple->create(
         header => [
             To      => $email->header("From"),
-            From    => $email->header("To"),
+            From    => config->{myfrom},
             Subject => "Ontvangen: " . $email->header("Subject"),
         ],
         body => template 'sendrcpt', { myurl => config->{myurl}, key => $key }, { layout => undef },
@@ -329,14 +349,19 @@ sub sendNotify {
     if (defined $row) {
 
         my @rcptlist = split /, /, $row->{recipients};
+        my $fromname = Email::Address::XS->new($row->{from_name}, config->{myfrom});
 
         my $reply = Email::Simple->create(
             header => [
                 To      => config->{authorize_by},
-                From    => $row->{from_address},
+                From    => config->{myfrom},
                 Subject => "Te versturen mailing: " . $row->{subject},
             ],
             body => template 'sendntfy', { myurl => config->{myurl},
+                                           from => $row->{from_address},
+                                           replyto => $row->{replyto},
+                                           name => $fromname->format(),
+                                           subject => $row->{subject},
                                            ackkey => $row->{ackkey},
                                            addr => \@rcptlist }, { layout => undef },
         );
@@ -365,18 +390,20 @@ sub mailing {
     $stm->execute($mailing->{key});
     if (my $mail = $stm->fetchrow_hashref) {
 
-        my @RCPT = Email::Address::XS->parse($mail->{recipients});
+        my @parsed = Email::Address::XS->parse($mail->{recipients});
         my ($failed, $delivered) = ('','');
         my $std = $db->prepare( config->{sqlite}{update_delivered} );
         my $stf = $db->prepare( config->{sqlite}{update_failed} );
 
-        for (@RCPT) {
+        for (@parsed) {
             my $to = $_->format();
+            my $from = Email::Address::XS->new($mail->{from_name}, config->{myfrom});
             my $reply = Email::Simple->create(
                 header => [
                     To      => $to,
-                    From    => $mail->{new_from_address},
+                    From    => $from->format(),
                     Subject => $mail->{subject},
+                    'Reply-To' => $mail->{new_from_address},
                     'Content-Type' => $mail->{content_type},
                 ],
                 body => $mail->{body},
@@ -403,7 +430,7 @@ sub mailing {
         my $report = Email::Simple->create(
             header => [
                 To      => $mail->{from_address},
-                From    => 'Bulk mailer <bulk@bulkmail.ict-sys.tudelft.nl>',
+                From    => config->{myfrom},
                 Cc      => config->{authorize_by},
                 Subject => "Bulkmail rapport",
             ],

@@ -1,7 +1,9 @@
 
-Een mail van <% from %> met onderwerp:
+Een mail van <% from %> met
 
-<% subject %>
+afzender: <% name %>
+onderwerp: <% subject %>
+reply-to: <% replyto %>
 
 Staat klaar om verzonder te worden.
 
