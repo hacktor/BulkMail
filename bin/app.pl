@@ -34,7 +34,7 @@ threads->create(sub {
                     my $email = Email::Simple->new($imap->message_string($msgnum));
                     my $key = makeKey();
                     my $ackkey = makeKey();
-                    $st->execute($key,$ackkey,$email->header("From"),$email->header("Subject"),$email->header("Date"),$email->header("Content-Type"),$email->body);
+                    $st->execute($key,$ackkey,$email->header("From"),$email->header("Subject"),$email->header("Date"),$email->header("Content-Type"),$email->header("Content-Transfer-Encoding"),$email->header("Content-Language"),$email->header("MIME-Version"),$email->body);
                     BulkMail::sendReceipt($email,$key);
 
                     # move the mail to the 'DONE' folder

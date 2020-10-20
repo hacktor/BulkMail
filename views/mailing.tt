@@ -28,12 +28,12 @@
       <div class="normal-content">
         <h3>Selecteer Reply-To adres</h3>
         <div class="radio">
-           <p><input type="radio" name="replyto" value="<% from %>"<% IF from == checked %> checked<% END %>>
-           <span><% from %></span></p>
 <% FOREACH f IN froms %>
            <p><input type="radio" name="replyto" value="<% f %>"<% IF f == checked %> checked<% END %>>
            <span><% f %></span></p>
 <% END %>
+           <p><input type="radio" name="replyto" value="<% from %>"<% IF from == checked %> checked<% END %>>
+           <span><% from %></span></p>
         </div>
           
         <div>

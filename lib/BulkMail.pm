@@ -49,7 +49,8 @@ any ['get', 'post'] => '/mailing/:key' => sub {
             }
 
             $checked = param('replyto');
-            $row->{new_from_address} = param('replyto');
+            $row->{replyto} = param('replyto');
+            $row->{from_name} = $name;
             examplemail($row->{from_address},$row);
             $message = "Voorbeeld mail verzonder naar $row->{from_address}";
         }
@@ -90,9 +91,10 @@ post '/recipients' => sub {
                 return;
             }
 
+            my $from = Email::Address::XS->new($row->{from_name}, config->{myfrom});
             template 'recipients', {subject => encode_entities($row->{subject}),
                                     from => encode_entities($row->{from_address}),
-                                    new_from => encode_entities("$name <". config->{myfrom} .">"),
+                                    new_from => encode_entities($from->format()),
                                     replyto => encode_entities(param('replyto'))};
         } else {
 
@@ -152,7 +154,7 @@ post '/submit' => sub {
                 template 'submit', {subject => encode_entities($row->{subject}),
                                     from => encode_entities($row->{from_address}),
                                     name => encode_entities($row->{from_name} ." <". config->{myfrom} .">"),
-                                    new_from => encode_entities($row->{new_from_address}),
+                                    replyto => encode_entities($row->{replyto}),
                                     authorize_by => encode_entities( config->{authorize_by} ),
                                     rcptnr => scalar %{$chkres->{recipients}},
                                     dblenr => scalar %{$chkres->{doubles}},
@@ -186,9 +188,11 @@ any ['get', 'post'] => '/submitted/:ackkey' => sub {
         }
 
         session ackkey => param('ackkey');
+        my $from = Email::Address::XS->new($row->{from_name}, config->{myfrom});
         template 'submitted', {subject => encode_entities($row->{subject}),
                                from => encode_entities($row->{from_address}),
-                               new_from => encode_entities($row->{new_from_address}),
+                               new_from => encode_entities($from->format()),
+                               replyto => encode_entities($row->{replyto}),
                                rcpt => encode_entities($row->{recipients}),
                                message => encode_entities($message),
                                body => encode_entities($row->{body})};
@@ -217,7 +221,7 @@ post '/done' => sub {
 
             template 'done', {subject => encode_entities($row->{subject}),
                               from => encode_entities($row->{from_address}),
-                              new_from => encode_entities($row->{new_from_address})};
+                              new_from => encode_entities($row->{replyto})};
         } else {
             template 'index', { error => "Key niet gevonden in database" };
         }
@@ -310,17 +314,21 @@ sub examplemail {
 
     my $to = shift;
     my $row = shift;
+    my $from = Email::Address::XS->new($row->{from_name}, config->{myfrom});
 
     my $reply = Email::Simple->create(
         header => [
             To      => $to,
-            From    => config->{myfrom},
+            From    => $from->format(),
             Subject => $row->{subject},
-            'Reply-To' => $row->{new_from_address},
-            'Content-Type' => $row->{content_type},
+            'Reply-To' => $row->{replyto},
         ],
         body => $row->{body},
     );
+    for my $header (@{ config->{saveheaders} }) {
+        (my $h = $header) =~ s/_/-/g; 
+        $reply->header_raw_set($h, $row->{$header}) if $row->{$header};
+    }
 
     sendmail($reply, { transport => transport() });
     debug( "Example to ". $reply->header("To") ." send\n");
@@ -403,11 +411,14 @@ sub mailing {
                     To      => $to,
                     From    => $from->format(),
                     Subject => $mail->{subject},
-                    'Reply-To' => $mail->{new_from_address},
-                    'Content-Type' => $mail->{content_type},
+                    'Reply-To' => $mail->{replyto},
                 ],
                 body => $mail->{body},
             );
+            for my $header (@{ config->{saveheaders} }) {
+                (my $h = $header) =~ s/_/-/g; 
+                $reply->header_raw_set($h, $mail->{$header}) if $mail->{$header};
+            }
 
             eval {
                 sendmail($reply, { transport => transport() });
@@ -436,7 +447,7 @@ sub mailing {
             ],
             body => template 'report', {
                 from => $mail->{from_address},
-                new_from => $mail->{new_from_address},
+                new_from => $mail->{replyto},
                 subject => $mail->{subject},
                 nrfail => scalar @F,
                 failed => \@F,

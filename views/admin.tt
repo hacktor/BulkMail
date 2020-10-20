@@ -13,7 +13,7 @@
             <table>
               <tr><td><b>Mail van</b></td><td><b>Afzender adres</b></td><td><b>Onderwerp</b></td><td><b>Datum</b></td></tr>
 <% FOREACH id IN all.keys.sort %>
-              <tr><td><% all.$id.from_address %></td><td><% all.$id.new_from_address %></td>
+              <tr><td><% all.$id.from_address %></td><td><% all.$id.replyto %></td>
                   <td><% all.$id.subject %></td><td><% all.$id.date %></td></tr>
 <% END %>
             </table>

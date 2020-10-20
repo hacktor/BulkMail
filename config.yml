@@ -24,6 +24,12 @@ extensions:
     - xlsx
     - ods
 
+saveheaders:
+    - Content_Type
+    - Content_Transfer_Encoding
+    - Content_Language
+    - MIME_Version
+
 myurl: https://example.com
 myfrom: bulkmail@example.com
 myname: Bulk Mailer
@@ -31,12 +37,12 @@ myname: Bulk Mailer
 sqlite:
     db: 'emails.db'
 
-    insert: 'insert into mbox (key,ackkey,from_address,subject,date,content_type,body) values (?,?,?,?,?,?,?)'
-    update_from: 'update mbox set new_from_address = ?, from_name = ? where key = ?'
+    insert: 'insert into mbox (key,ackkey,from_address,subject,date,Content_Type,Content_Transfer_Encoding,Content_Language,MIME_Version,body) values (?,?,?,?,?,?,?,?,?,?)'
+    update_from: 'update mbox set replyto = ?, from_name = ? where key = ?'
     update_rcpt: 'update mbox set recipients = ?, doubles = ?, invalid = ? where key = ?'
     get_mail: 'select * from mbox where key = ?'
     get_mail_byack: 'select * from mbox where ackkey = ?'
-    get_all: 'select id, from_address, new_from_address, subject, date, recipients from mbox'
+    get_all: 'select id, from_address, replyto, subject, date, recipients from mbox'
 
     insert_mailing: 'insert into mailings (key) values (?)' 
     get_mailings: 'select * from mailings where status = ?'
@@ -55,10 +61,13 @@ sqlite:
           ackkey text unique,
           from_address text,
           from_name text,
-          new_from_address text,
+          replyto text,
           subject text,
           date text,
-          content_type text,
+          Content_Type text,
+          Content_Transfer_Encoding text,
+          Content_Language text,
+          MIME_Version text,
           body text,
           recipients text,
           doubles text,
