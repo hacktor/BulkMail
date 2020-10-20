@@ -24,12 +24,16 @@ extensions:
     - xlsx
     - ods
 
+myurl: https://example.com
+myfrom: bulkmail@example.com
+myname: Bulk Mailer
+
 sqlite:
     db: 'emails.db'
 
     insert: 'insert into mbox (key,ackkey,from_address,subject,date,content_type,body) values (?,?,?,?,?,?,?)'
-    update_from: 'update mbox set new_from_address = ? where key = ?'
-    update_rcpt: 'update mbox set recipients = ? where key = ?'
+    update_from: 'update mbox set new_from_address = ?, from_name = ? where key = ?'
+    update_rcpt: 'update mbox set recipients = ?, doubles = ?, invalid = ? where key = ?'
     get_mail: 'select * from mbox where key = ?'
     get_mail_byack: 'select * from mbox where ackkey = ?'
     get_all: 'select id, from_address, new_from_address, subject, date, recipients from mbox'
@@ -50,12 +54,15 @@ sqlite:
           key text unique,
           ackkey text unique,
           from_address text,
+          from_name text,
           new_from_address text,
           subject text,
           date text,
           content_type text,
           body text,
-          recipients text
+          recipients text,
+          doubles text,
+          invalid text
         );
     - name: mailings
       schema: >
