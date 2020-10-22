@@ -29,10 +29,11 @@
         <tr><td><b>Onderwerp</b></td><td><input style="width: 540px;" type="text" name="subject" value="<% subject %>"></td></tr>
         </table>
       </div>
+      <br />
 
       <div class="tab">
-        <button type="button" class="tablinks" onclick="openTab(event, 'contents')">Inhoud mail</button>
-        <button type="button" class="tablinks" onclick="openTab(event, 'recipients')">Ontvangers</button>
+        <button type="button" class="tablinks" onclick="openTab(event, 'contents', 'tabcontent')">Inhoud mail</button>
+        <button type="button" class="tablinks" onclick="openTab(event, 'recipients', 'tabcontent')">Ontvangers</button>
         <button type="submit" class="tablinks" name="examplemail" formaction="">Stuur voorbeeld</button>
         <button type="submit" class="tablinks" name="authorize">Start mailing</button>
       </div>
