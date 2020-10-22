@@ -4,6 +4,7 @@
         <div id="header">
           <h1>BulkMail Admin pagina</h1>
           <h2>Please login</h2>
+          <img src="/img/mailing-header.png" style="float: right; height: 90px; margin-top: -60px;">
         </div>
 
         <div id="bodytext">

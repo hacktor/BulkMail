@@ -4,6 +4,7 @@
     <div id="header">
       <h1>BulkMail pagina</h1>
       <h2>Controle van een mailing</h2>
+      <img src="/img/mailing-header.png" style="float: right; height: 90px; margin-top: -60px;">
     </div>
 
     <div id="bodytext">
@@ -14,7 +15,7 @@
       <div id="maintext-highlight">
         <table>
           <tr><td><b>Afzender</b></td><td><% from %></td></tr>
-          <tr><td><b>Wordt verzonden als</b></td><td><% new_from %></td></tr>
+          <tr><td><b>Wordt verzonden als</b></td><td><% replyto %></td></tr>
           <tr><td><b>Onderwerp</b></td><td><% subject %></td></tr>
         </table>
       </div>

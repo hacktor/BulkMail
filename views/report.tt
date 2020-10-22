@@ -3,7 +3,7 @@ De mailing van <% from %> met onderwerp:
 
 <% subject %>
 
-Is verzonden met afzender adres <% new_from %>.
+Is verzonden met afzender adres <% replyto %>.
 
 --------------------
 Niet verzonden: <% nrfail %>

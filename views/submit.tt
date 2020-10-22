@@ -4,6 +4,7 @@
     <div id="header">
       <h1>BulkMail pagina</h1>
       <h2>Ontvangers geselecteerd voor uw mailing</h2>
+      <img src="/img/mailing-header.png" style="float: right; height: 90px; margin-top: -60px;">
     </div>
 
     <div id="bodytext">
@@ -12,25 +13,14 @@
       <div id="maintext-highlight">
         <table>
           <tr><td><b>Afzender</b></td><td><% from %></td></tr>
-          <tr><td><b>Wordt verstuurd als</b></td><td><% name %></td></tr>
-          <tr><td><b>Reply-To adres</b></td><td><% replyto %></td></tr>
+          <tr><td><b>Wordt verstuurd als</b></td><td><% replyto %></td></tr>
           <tr><td><b>Onderwerp</b></td><td><% subject %></td></tr>
         </table>
       </div>
 
       <p>Aantal email adressen: <% rcptnr %></p>
       <p>Dubbele adressen: <% dblenr %></p>
-<% if dblenr > 0 %>
-        <pre>
-<% double %>
-        </pre>
-<% end %>
       <p>Foutieve adressen: <% invanr %></p>
-<% if invanr > 0 %>
-        <pre>
-<% invalid %>
-        </pre>
-<% end %>
 
       <br />
       <p>Een mail ter goedgekeuring is verstuurd naar <% authorize_by %></p>
