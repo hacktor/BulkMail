@@ -34,7 +34,25 @@ threads->create(sub {
                     my $email = Email::Simple->new($imap->message_string($msgnum));
                     my $key = makeKey();
                     my $ackkey = makeKey();
-                    $st->execute($key,$ackkey,$email->header("From"),$email->header("Subject"),$email->header("Date"),$email->header("Content-Type"),$email->header("Content-Transfer-Encoding"),$email->header("Content-Language"),$email->header("MIME-Version"),$email->body);
+                    my $ct = ($email->header_raw("Content-Type")) ?
+                              $email->header_raw("Content-Type") : '';
+                    my $ctf = ($email->header_raw("Content-Transfer-Encoding")) ?
+                               $email->header_raw("Content-Transfer-Encoding") : '';
+                    my $cl = ($email->header_raw("Content-Language")) ?
+                              $email->header_raw("Content-Language") : '';
+                    my $mv = ($email->header_raw("MIME-Version")) ?
+                              $email->header_raw("MIME-Version") : '';
+
+                    eval {
+                        $st->execute($key,$ackkey,$email->header_raw("From"),$email->header_raw("Subject"),
+                                 $email->header_raw("Date"),$ct,$ctf,$cl,$mv,$email->body);
+                    };
+                    if ($@) {
+                        debug($@);
+                        # move the mail to the 'ERROR' folder
+                        $imap->expunge if $imap->move( 'ERROR', $msgnum );
+                        next;
+                    }
                     BulkMail::sendReceipt($email,$key);
 
                     # move the mail to the 'DONE' folder
