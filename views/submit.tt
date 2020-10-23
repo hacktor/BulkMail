@@ -15,12 +15,12 @@
           <tr><td><b>Afzender</b></td><td><% from %></td></tr>
           <tr><td><b>Wordt verstuurd als</b></td><td><% replyto %></td></tr>
           <tr><td><b>Onderwerp</b></td><td><% subject %></td></tr>
+          <tr><td><b>Email adressen</b></td><td><% rcptnr %></td></tr>
+          <tr><td><b>Dubbele adressen</b></td><td><% dblenr %></td></tr>
+          <tr><td><b>Foutieve adressen</b></td><td><% invanr %></td></tr>
         </table>
       </div>
 
-      <p>Aantal email adressen: <% rcptnr %></p>
-      <p>Dubbele adressen: <% dblenr %></p>
-      <p>Foutieve adressen: <% invanr %></p>
 
       <br />
       <p>Een mail ter goedgekeuring is verstuurd naar <% authorize_by %></p>
