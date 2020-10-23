@@ -231,13 +231,12 @@ any ['get', 'post'] => '/submitted/:ackkey' => sub {
             $message = "Voorbeeld mail verzonder naar ". config->{authorize_by};
         }
 
-        my $rcptnr = () = $row->{recipients} =~ /, /; # count number of recipients
-        $rcptnr++;
+        my @rcpt = split /, /, $row->{recipients};
 
         template 'submitted', {subject => encode_entities($row->{subject}),
                                from => encode_entities($row->{from_address}),
                                replyto => encode_entities($from->format()),
-                               rcptnr => $rcptnr,
+                               rcptnr => scalar @rcpt,
                                rcpt => encode_entities($row->{recipients}),
                                message => encode_entities($message),
                                body => encode_entities($row->{body})};
