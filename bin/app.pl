@@ -5,6 +5,7 @@ use BulkMail;
 use threads;
 use Mail::IMAPClient;
 use Email::Simple;
+use Email::Address::XS;
 use IO::Socket::SSL;
 
 # initialize (create if not exists) database
@@ -42,6 +43,28 @@ threads->create(sub {
                               $email->header_raw("Content-Language") : '';
                     my $mv = ($email->header_raw("MIME-Version")) ?
                               $email->header_raw("MIME-Version") : '';
+
+                    if (defined config->{allowed_domains} and ref config->{allowed_domains} eq 'ARRAY') {
+
+                        my $domain = Email::Address::XS->parse($email->header("From"))->host();
+                        #my $domain = $addr->host();
+                        my @ok = grep /^$domain$/, @{ config->{allowed_domains} };
+                        if (not @ok) {
+
+                            debug("$domain is not ok, discarding mail from ". $email->header("From"));
+                            $imap->expunge if $imap->move( 'Trash', $msgnum );
+                            next;
+                        }
+                    }
+
+                    # filter NDR's
+                    if ($email->header("From") =~ /MAILER-DAEMON/ or $email->header("Subject") =~ /Undelivered Mail/i) {
+
+                        # TODO undeliver count?
+                        debug("Received NDR, moving to NDR folder");
+                        $imap->expunge if $imap->move( 'NDR', $msgnum );
+                        next;
+                    }
 
                     eval {
                         $st->execute($key,$ackkey,$email->header_raw("From"),$email->header_raw("Subject"),
