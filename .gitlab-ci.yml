@@ -1,5 +1,6 @@
 variables:
   PROJECT_NAME: "bulkmail"
+  REGISTRY: "registry.ict-sys.tudelft.nl/images"
 
 stages:
   - build
@@ -19,4 +20,4 @@ push_stage:
     - bulkmail
     - sysadmin
   script:
-    - echo "not pushing $PROJECT_NAME"
+    - podman push localhost/$PROJECT_NAME:latest $REGISTRY/$PROJECT_NAME:latest
