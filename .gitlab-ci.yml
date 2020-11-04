@@ -16,6 +16,8 @@ build_stage:
 
 push_stage:
   stage: push
+  only:
+    - master
   tags:
     - bulkmail
     - sysadmin
