@@ -1,6 +1,7 @@
 variables:
   PROJECT_NAME: "bulkmail"
-  REGISTRY: "registry.ict-sys.tudelft.nl/images"
+  REGISTRY: "registry.ict-sys.tudelft.nl"
+  IMAGEDIR: "registry.ict-sys.tudelft.nl/images"
 
 stages:
   - build
@@ -22,4 +23,5 @@ push_stage:
     - bulkmail
     - sysadmin
   script:
-    - podman push localhost/$PROJECT_NAME:latest $REGISTRY/$PROJECT_NAME:latest
+    - podman login -u $REGISTRY_USER -p $REGISTRY_PASS
+    - podman push localhost/$PROJECT_NAME:latest $IMAGEDIR/$PROJECT_NAME:latest
