@@ -1,0 +1,22 @@
+variables:
+  PROJECT_NAME: "bulkmail"
+
+stages:
+  - build
+  - push
+
+build_stage:
+  stage: build
+  tags:
+    - bulkmail
+    - sysadmin
+  script:
+    - ./build.sh
+
+push_stage:
+  stage: push
+  tags:
+    - bulkmail
+    - sysadmin
+  script:
+    - echo "not pushing $PROJECT_NAME"
