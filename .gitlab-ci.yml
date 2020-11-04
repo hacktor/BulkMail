@@ -23,5 +23,5 @@ push_stage:
     - bulkmail
     - sysadmin
   script:
-    - podman login -u $REGISTRY_USER -p $REGISTRY_PASS
+    - podman login -u $REGISTRY_USER -p $REGISTRY_PASS $REGISTRY
     - podman push localhost/$PROJECT_NAME:latest $IMAGEDIR/$PROJECT_NAME:latest
