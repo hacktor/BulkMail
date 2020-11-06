@@ -9,6 +9,9 @@ stages:
 
 build_stage:
   stage: build
+  only:
+    - master
+    - develop
   tags:
     - bulkmail
     - sysadmin
@@ -23,5 +26,6 @@ push_stage:
     - bulkmail
     - sysadmin
   script:
+    - source ~/.creds
     - podman login -u $REGISTRY_USER -p $REGISTRY_PASS $REGISTRY
     - podman push localhost/$PROJECT_NAME:latest $IMAGEDIR/$PROJECT_NAME:latest
