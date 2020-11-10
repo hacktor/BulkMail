@@ -391,8 +391,14 @@ sub examplemail {
         $reply->header_raw_set($h, $row->{$header}) if $row->{$header};
     }
 
-    sendmail($reply, { transport => transport() });
-    debug( "Example to ". $reply->header("To") ." send\n");
+    eval {
+        sendmail($reply, { transport => transport(), from => config->{bounce} });
+    };
+    if ($@) {
+        debug($@);
+    } else {
+        debug( "Example to ". $reply->header("To") ." send\n");
+    }
 }
 
 sub sendReceipt {
@@ -409,8 +415,14 @@ sub sendReceipt {
         body => template 'sendrcpt', { myurl => config->{myurl}, key => $key }, { layout => undef },
     );
 
-    sendmail($reply, { transport => transport() });
-    debug( "Reply to ". $reply->header("To") ." send\n");
+    eval {
+        sendmail($reply, { transport => transport(), from => config->{bounce} });
+    };
+    if ($@) {
+        debug($@);
+    } else {
+        debug( "Reply to ". $reply->header("To") ." send\n");
+    }
 }
 
 sub sendNotify {
@@ -436,8 +448,14 @@ sub sendNotify {
                                            addr => \@rcptlist }, { layout => undef },
         );
 
-        sendmail($reply, { transport => transport() });
-        debug("Authorization request to ". $reply->header("To") ." send\n");
+        eval {
+            sendmail($reply, { transport => transport(), from => config->{bounce} });
+        };
+        if ($@) {
+            debug($@);
+        } else {
+            debug("Authorization request to ". $reply->header("To") ." send\n");
+        }
     } else {
         debug("Authorization request not send\n");
     }
@@ -482,7 +500,7 @@ sub mailing {
             }
 
             eval {
-                sendmail($reply, { transport => transport() });
+                sendmail($reply, { transport => transport(), from => config->{bounce} });
             };
             if ($@) {
                 $failed .= ($failed) ? ", $to" : $to;
@@ -518,10 +536,13 @@ sub mailing {
                 delivered => \@D }, { layout => undef },
         );
         eval {
-            sendmail($report, { transport => transport() });
+            sendmail($report, { transport => transport(), from => config->{bounce} });
         };
-        debug($@) if $@;
-        debug("Report sent");
+        if ($@) {
+            debug($@);
+        } else {
+            debug("Report sent");
+        }
     }
 }
 

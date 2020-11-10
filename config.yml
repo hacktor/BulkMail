@@ -33,6 +33,7 @@ saveheaders:
 myurl: https://example.com
 myfrom: bulkmail@example.com
 myname: Bulk Mailer
+bounce: bulkmail+bounce@example.com
 
 sqlite:
     db: 'emails.db'
