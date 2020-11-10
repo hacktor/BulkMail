@@ -4,6 +4,7 @@
         <div id="header">
           <h1>BulkMail pagina</h1>
           <h2>Selecteer ontvangers voor uw mailing</h2>
+          <img src="/img/mailing-header.png" style="float: right; height: 90px; margin-top: -60px;">
         </div>
 
         <div id="bodytext">
@@ -11,80 +12,44 @@
 
           <div id="maintext-highlight">
             <table>
-              <tr><td><b>Afzender</b></td><td><% new_from %></td></tr>
+              <tr><td><b>Afzender</b></td><td><% from %></td></tr>
+              <tr><td><b>Wordt verstuurd als</b></td><td><% replyto %></td></tr>
               <tr><td><b>Onderwerp</b></td><td><% subject %></td></tr>
-              <tr><td><b>Datum</b></td><td><% date %></td></tr>
             </table>
           </div>
 
           <br />
-          <h1>Selecteer groep(en) geadresseerden</h1>
+          <h3>Selecteer geadresseerden</h3>
   
-          <form action="/submit" method="POST" id="showhideform">
+          <form action="/submit" method="POST" id="showhideform" enctype="multipart/form-data">
    
-            <select name="selMyList" onchange="showHide(this)">
-                   <option value="" selected=1>Selecteer geadresseerden uit</option>
-                   <option value="1">Provincies</option>
-                   <option value="2">Gemeenten</option>
-                   <option value="3">Afdelingen</option>
-                   <option value="4">Alle leden</option>
-            </select>
-  
-            <div id="div1">
-              <table><tr><td>
-              <select multiple class="selectlist" size=10 width=40 id="provSel">
-<% FOREACH key IN prov.sort %>
-                <option value="<% key %>"><% key %></option>
-<% END %>
-              </select>
-              </td><td>
-              <button type="button" onclick='GetSelectedValues("provSel","provarea")'>&minus;&minus;&minus;&gt;</button>
-              <br />
-              <br />
-              <input type="submit" name="provSubmit" value="Klaar">
-              </td><td>
-              <textarea name="provarea" cols="20" rows="10" id="provarea"></textarea>
-              </td></tr></table>
-            </div>
-  
-            <div id="div2">
-              <table><tr><td>
-              <select multiple class="selectlist" size=10 width=40 id="citySel">
-<% FOREACH key IN city.sort %>
-                <option value="<% key %>"><% key %></option>
-<% END %>
-              </select>
-              </td><td>
-              <button type="button" onclick='GetSelectedValues("citySel","cityarea")'>&minus;&minus;&gt;</button>
-              <br />
-              <br />
-              <input type="submit" name="citySubmit" value="Klaar">
-              </td><td>
-              <textarea name="cityarea" cols="20" rows="10" id="cityarea"></textarea>
-              </td></tr></table>
-            </div>
-  
-            <div id="div3">
-              <table><tr><td>
-              <select multiple class="selectlist" size=10 width=40 id="listSel">
-<% FOREACH key IN list.sort %>
-                <option value="<% key %>"><% key %></option>
-<% END %>
-              </select>
-              </td><td>
-              <button type="button" onclick='GetSelectedValues("listSel","listarea")'>&minus;&minus;&gt;</button>
-              <br />
-              <br />
-              <input type="submit" name="listSubmit" value="Klaar">
-              </td><td>
-              <textarea name="listarea" cols="20" rows="10" id="listarea"></textarea>
-              </td></tr></table>
-            </div>
+          <div class="tab">
+            <button type="button" class="tablinks" onclick="openTab(event, 'addrlist', 'tabdummy')">Invoer adressen</button>
+            <button type="button" class="tablinks" onclick="openTab(event, 'textfile', 'tabdummy')">Upload Textbestand</button>
+            <button type="button" class="tablinks" onclick="openTab(event, 'spreadsheet', 'tabdummy')">Upload Spreadsheet</button>
+          </div>
 
-            <div id="div4">
-              <h2>Alle leden</h2>
-              <h3>Nog niet beschikbaar</h3>
-            </div>
+          <div id="addrlist" class='tabdummy' style='display: none;'>
+            <p><h2>Voer email adressen in, één per regel</h2></p>
+            <p><textarea name="adreslijst" rows="20" style="width: 640px;"></textarea></p>
+            <p><input type="submit" value="Verzend"></p>
+          </div>
+
+          <div id="textfile" class='tabdummy' style='display: none;'>
+            <p><h2>Upload een text bestand met email adressen, één per regel</h2>
+            Let op: hier geen Word of Excel bestanden</p>
+            <p><input type="file" name="text"></p>
+            <p><input type="submit" value="Verzend"></p>
+          </div>
+
+          <div id="spreadsheet" class='tabdummy' style='display: none;'>
+            <p><h2>Upload een Excel bestand met in de eerste kolom de email adressen</h2>
+            <h2>Ondersteunde formaten: csv, xls, xlsx, ods</h2>
+            Data buiten de eerste kolom worden in deze versie van de bulkmailer genegeerd</p>
+            <p><input type="file" name="spread"></p>
+            <p><input type="submit" value="Verzend"></p>
+          </div>
+  
           </form>
 
         </div>

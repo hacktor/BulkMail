@@ -4,10 +4,13 @@
     <div id="header">
       <h1>BulkMail pagina</h1>
       <h2>Selecteer de afzender voor uw mailing</h2>
+      <img src="/img/mailing-header.png" style="float: right; height: 90px; margin-top: -60px;">
     </div>
 
     <div id="bodytext">
       <h1>Ontvangen Email:</h1>
+
+      <% IF message %><h2><% message %></h2><% END %>
 
       <div id="maintext-highlight">
         <table>
@@ -17,27 +20,35 @@
         </table>
       </div>
 
-      <br /><button onclick="toggleMail()">Toggle Mailbody</button>
-      <div id="mailbody" class=preformatted-body style="display: none">
-        <% body %>
-      </div>
-
       <form action="/recipients" method=POST>
       <div class="normal-content">
         <h3>Selecteer afzender adres</h3>
         <div class="radio">
-           <p><input type="radio" name="afz" value="<% from %>" checked>
-           <span><% from %></span></p>
-<% FOREACH from IN froms %>
-           <p><input type="radio" name="afz" value="<% from %>">
-           <span><% from %></span></p>
+<% FOREACH f IN froms %>
+<% IF f != from %>
+           <p><input type="radio" name="replyto" value="<% f %>"<% IF f == checked %> checked<% END %>>
+           <span><% f %></span></p>
 <% END %>
+<% END %>
+           <p><input type="radio" name="replyto" value="<% from %>"<% IF from == checked %> checked<% END %>>
+           <span><% from %></span></p>
+        </div>
+          
+        <div>
+          <p>Afzender naam: <input type="text" name="name" value="<% name %>"></p>
         </div>
       </div>
 
-      <div class="normal-content">
-        <h3><input type="submit" value="Ga naar geadresseerden"></h3>
+      <div class="tab">
+        <button type="button" class="tablinks" onclick="openTab(event, 'contents', 'tabcontent')">Ruwe inhoud mail</button>
+        <button type="submit" class="tablinks" name="examplemail" formaction="">Stuur voorbeeld</button>
+        <button type="submit" class="tablinks" name="recipients">Naar ontvangers</button>
       </div>
+
+      <div id='contents' class='tabcontent' class=preformatted-body style='display: none;'>
+<% body %>
+      </div>
+
       </form>
     </div>
   </div>

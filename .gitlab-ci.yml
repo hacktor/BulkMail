@@ -1,0 +1,31 @@
+variables:
+  PROJECT_NAME: "bulkmail"
+  REGISTRY: "registry.ict-sys.tudelft.nl"
+  IMAGEDIR: "registry.ict-sys.tudelft.nl/images"
+
+stages:
+  - build
+  - push
+
+build_stage:
+  stage: build
+  only:
+    - master
+    - develop
+  tags:
+    - bulkmail
+    - sysadmin
+  script:
+    - ./build.sh
+
+push_stage:
+  stage: push
+  only:
+    - master
+  tags:
+    - bulkmail
+    - sysadmin
+  script:
+    - source ~/.creds
+    - podman login -u $REGISTRY_USER -p $REGISTRY_PASS $REGISTRY
+    - podman push localhost/$PROJECT_NAME:latest $IMAGEDIR/$PROJECT_NAME:latest

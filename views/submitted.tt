@@ -4,32 +4,48 @@
     <div id="header">
       <h1>BulkMail pagina</h1>
       <h2>Controle van een mailing</h2>
+      <img src="/img/mailing-header.png" style="float: right; height: 90px; margin-top: -60px;">
     </div>
 
     <div id="bodytext">
-      <h1>Ontvangen Email:</h1>
+      <h1>Te versturen Email:</h1>
+
+      <% IF message %><h2><% message %></h2><% END %>
 
       <div id="maintext-highlight">
         <table>
-          <tr><td><b>Afzender</b></td><td><% from %></td></tr>
+          <tr><td><b>Originale afzender</b></td><td><% from %></td></tr>
+          <tr><td><b>Wordt verstuurd als</b></td><td><% replyto %></td></tr>
           <tr><td><b>Onderwerp</b></td><td><% subject %></td></tr>
-          <tr><td><b>Datum</b></td><td><% date %></td></tr>
+          <tr><td><b>Geadresseerden</b></td><td><% rcptnr %></td></tr>
         </table>
       </div>
 
-      <br /><button onclick="toggleMail()">Toggle Mailbody</button>
-      <div id="mailbody" class=preformatted-body style="display: none">
-        <% body %>
-      </div>
-
+      <h3>Bewerk afzender of onderwerp</h3>
       <form action="/done" method=POST>
       <div class="normal-content">
+        <table>
+        <tr><td><b>Afzender</b></td><td><input style="width: 540px;" type="text" name="replyto" value="<% replyto %>"></td></tr>
+        <tr><td><b>Onderwerp</b></td><td><input style="width: 540px;" type="text" name="subject" value="<% subject %>"></td></tr>
+        </table>
       </div>
+      <br />
 
-      <div class="normal-content">
-        <h3><input type="submit" value="Geef mailing vrij voor verzenden"></h3>
+      <div class="tab">
+        <button type="button" class="tablinks" onclick="openTab(event, 'contents', 'tabcontent')">Inhoud mail</button>
+        <button type="button" class="tablinks" onclick="openTab(event, 'recipients', 'tabcontent')">Ontvangers</button>
+        <button type="submit" class="tablinks" name="examplemail" formaction="">Stuur voorbeeld</button>
+        <button type="submit" class="tablinks" name="authorize">Start mailing</button>
       </div>
       </form>
+
+      <div id='contents' class='tabcontent' class=preformatted-body style='display: none;'>
+<% body %>
+      </div>
+      <div id='recipients' class='tabcontent' class=preformatted-body style='display: none;'>
+<% rcpt %>
+      </div>
+
     </div>
   </div>
 </div>

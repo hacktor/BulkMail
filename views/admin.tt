@@ -1,0 +1,25 @@
+<div id="page">
+
+      <div id="content">
+        <div id="header">
+          <h1>BulkMail Admin pagina</h1>
+          <h2>Overzicht mailings</h2>
+          <img src="/img/mailing-header.png" style="float: right; height: 90px; margin-top: -60px;">
+        </div>
+
+        <div id="bodytext">
+          <h1>Overzicht mailings:</h1>
+
+          <div id="maintext-highlight">
+            <table>
+              <tr><td><b>Mail van</b></td><td><b>Afzender adres</b></td><td><b>Onderwerp</b></td><td><b>Datum</b></td></tr>
+<% FOREACH id IN all.keys.sort %>
+              <tr><td><% all.$id.from_address %></td><td><% all.$id.replyto %></td>
+                  <td><% all.$id.subject %></td><td><% all.$id.date %></td></tr>
+<% END %>
+            </table>
+          </div>
+
+        </div>
+      </div>
+</div>

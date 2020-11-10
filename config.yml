@@ -10,30 +10,78 @@ layout: "main"
 
 charset: "UTF-8"
 
-template: "template_toolkit"
+template: template_toolkit
 
 session: "YAML"
 session_dir: "/tmp/BulkMail-sessions"
 
 server_tokens: false
 
+# supported spreadsheet extensions
+extensions:
+    - csv
+    - xls
+    - xlsx
+    - ods
+
+saveheaders:
+    - Content_Type
+    - Content_Transfer_Encoding
+    - Content_Language
+    - MIME_Version
+
+myurl: https://example.com
+myfrom: bulkmail@example.com
+myname: Bulk Mailer
+
 sqlite:
     db: 'emails.db'
-    insert: 'insert into mbox (key,ackkey,from_address,subject,date,body) values (?,?,?,?,?,?)'
-    update_from: 'update mbox set new_from_address = ? where key = ?'
-    update_rcpt: 'update mbox set selfrom = ?, recipients = ? where key = ?'
-    schema: >
-      CREATE TABLE IF NOT EXISTS mbox (
-        key text primary key,
-        ackkey text unique,
-        from_address text,
-        new_from_address text,
-        subject text,
-        date text,
-        body text,
-        selfrom text,
-        recipients text,
-        status text,
-        schedule text
-      );
+
+    insert: 'insert into mbox (key,ackkey,from_address,subject,date,Content_Type,Content_Transfer_Encoding,Content_Language,MIME_Version,body) values (?,?,?,?,?,?,?,?,?,?)'
+    update_from: 'update mbox set replyto = ?, from_name = ? where key = ?'
+    update_rcpt: 'update mbox set recipients = ?, doubles = ?, invalid = ? where key = ?'
+    update_subj: 'update mbox set subject = ? where key = ?'
+    get_mail: 'select * from mbox where key = ?'
+    get_mail_byack: 'select * from mbox where ackkey = ?'
+    get_all: 'select id, from_address, replyto, subject, date, recipients from mbox'
+
+    insert_mailing: 'insert into mailings (key) values (?)' 
+    get_mailings: 'select * from mailings where status = ?'
+    update_status: 'update mailings set status = ? where key = ?'
+    update_delivered: 'update mailings set delivered = ? where key = ?'
+    update_failed: 'update mailings set failed = ? where key = ?'
+    get_delivered: 'select delivered from mailings where key = ?'
+    get_failed: 'select failed from mailings where key = ?'
+
+    tables:
+    - name: mbox
+      schema: >
+        CREATE TABLE IF NOT EXISTS mbox (
+          id integer primary key,
+          key text unique,
+          ackkey text unique,
+          from_address text,
+          from_name text,
+          replyto text,
+          subject text,
+          date text,
+          Content_Type text,
+          Content_Transfer_Encoding text,
+          Content_Language text,
+          MIME_Version text,
+          body text,
+          recipients text,
+          doubles text,
+          invalid text
+        );
+    - name: mailings
+      schema: >
+        CREATE TABLE IF NOT EXISTS mailings (
+          id integer primary key,
+          key text unique,
+          timestamp integer(4) not null default (strftime('%s','now')),
+          delivered text default "",
+          failed text default "",
+          status int default 0
+        );
 

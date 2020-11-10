@@ -1,9 +1,10 @@
 
-Een mail van <% from %> met onderwerp:
+Een mail van <% from %> met
 
-<% subject %>
+Afzender: <% replyto %>
+Onderwerp: <% subject %>
 
-Staat klaar om verzonder te worden naar: <% selfrom %> <% recipients %>
+Staat klaar om verzonder te worden.
 
 Authoriseer deze mailing via onderstaande url:
 

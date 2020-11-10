@@ -1,19 +1,41 @@
-# configuration file for production environment
+# configuration file for development environment
 
-# only log warning and error messages
-log: "warning"
+layout: "main"
 
-# log message to a file in logs/
-logger: "file"
+# the logger engine to use
+# console: log messages to STDERR (your console where you started the
+#          application server)
+# file:    log message to a file in log/
+logger: "console"
+log: "info"
+behind_proxy: 1
 
-# don't consider warnings critical
-warnings: 0
+imap:
+  host: imap.example.com:993
+  user: bulkmail
+  pass: 37331s3cr3t
+  ca: ./ssl.pem
 
-# hide errors 
-show_errors: 0
+smtp:
+  ssl: starttls
+  host: smtp.example.com
+  user: bulkmail
+  pass: 37331s3cr3t
+  ca: ./ssl.pem
 
-# cache route resolution for maximum performance
-route_cache: 1
+myurl: https://bulkmail.example.com
+myfrom: bulkmail@example.com
+bounce: bulktest+bounce@example.com
+myname: Bulk Mailer
 
-database: sqlite3
+froms:
+  - info@example.com
+  - noreply@example.com
+  - sysadmin@example.com
 
+authorize_by: Sysadmin <sysadmin@example.com>
+
+allowed_domains:
+  - example.com
+
+allowed_senders:
