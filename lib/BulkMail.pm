@@ -150,7 +150,7 @@ post '/submit' => sub {
             } 
             if (my $file = request->upload("spread")) {
 
-                $chkres = checkemail(firstcolumn($file));
+                $chkres = checkemail(searchcol($file));
 
             }
 
@@ -326,15 +326,28 @@ sub checkemail {
     return { recipients => $recipients, doubles => $doubles, invalid => $invalid };
 }
 
-sub firstcolumn {
+sub searchcol {
+
+    # search first 4 columns and rows for email address
+    # return column from first found valid address or empty list otherwise
+
     my $file = shift;
     (my $ext = $file->filename) =~ s/.*\.//;
-    if (grep /^$ext$/, @{ config->{extensions} }) {
-        my $book = ReadData($file->content, parser => $ext);
-        my $col = $book->[1]{cell}[1];
-        shift @$col;
-        return @$col;
+    return () unless grep /^$ext$/, @{ config->{extensions} };
+
+    my $book = ReadData($file->content, parser => $ext);
+
+    for my $x (1..4) {
+        my @column = @{$book->[1]{cell}[$x]};
+        next unless @column;
+        for my $y (1..4) {
+            if (defined $column[$y]) {
+                my $addr = Email::Address::XS->parse($column[$y]);
+                return @column[$y..$#column] if $addr->is_valid();
+            }
+        }
     }
+    return ();
 }
 
 sub transport {
