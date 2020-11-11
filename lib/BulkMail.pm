@@ -2,6 +2,7 @@ package BulkMail;
 use utf8;
 use Dancer ':syntax';
 use HTML::Entities;
+use Encode qw(decode);
 use Email::Simple;
 use Email::Sender::Simple qw(sendmail);
 use Email::Simple::Creator;
@@ -77,7 +78,7 @@ any ['get', 'post'] => '/mailing/:key' => sub {
         $checked = $from->address();
 
         session key => param('key');
-        template 'mailing', {subject => encode_entities($row->{subject}),
+        template 'mailing', {subject => encode_entities(decode("MIME-Header",$row->{subject})),
                              from => encode_entities($from->address()),
                              name => encode_entities($from->phrase()),
                              date => encode_entities($row->{date}),
@@ -111,7 +112,7 @@ post '/recipients' => sub {
             }
 
             my $from = Email::Address::XS->new($name, $replyto);
-            template 'recipients', {subject => encode_entities($row->{subject}),
+            template 'recipients', {subject => encode_entities(decode("MIME-Header",$row->{subject})),
                                     from => encode_entities($row->{from_address}),
                                     replyto => encode_entities($from->format())};
         } else {
@@ -170,7 +171,7 @@ post '/submit' => sub {
                 $row->{recipients} = $rcptstr;
                 sendNotify($row);
                 my $from = Email::Address::XS->new($row->{from_name}, $row->{replyto});
-                template 'submit', {subject => encode_entities($row->{subject}),
+                template 'submit', {subject => encode_entities(decode("MIME-Header",$row->{subject})),
                                     from => encode_entities($row->{from_address}),
                                     replyto => encode_entities($from->format()),
                                     authorize_by => encode_entities( config->{authorize_by} ),
@@ -233,7 +234,7 @@ any ['get', 'post'] => '/submitted/:ackkey' => sub {
 
         my @rcpt = split /, /, $row->{recipients};
 
-        template 'submitted', {subject => encode_entities($row->{subject}),
+        template 'submitted', {subject => encode_entities(decode("MIME-Header",$row->{subject})),
                                from => encode_entities($row->{from_address}),
                                replyto => encode_entities($from->format()),
                                rcptnr => scalar @rcpt,
@@ -267,7 +268,7 @@ post '/done' => sub {
         }
 
         my $from = Email::Address::XS->new($row->{from_name}, $row->{replyto});
-        template 'done', {subject => encode_entities($row->{subject}),
+        template 'done', {subject => encode_entities(decode("MIME-Header",$row->{subject})),
                           from => encode_entities($row->{from_address}),
                           replyto => encode_entities($from->format())};
     } else {
