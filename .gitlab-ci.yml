@@ -4,8 +4,20 @@ variables:
   IMAGEDIR: "registry.ict-sys.tudelft.nl/images"
 
 stages:
+  - clean
   - build
   - push
+
+clean_stage:
+  stage: clean
+  only:
+    - master
+    - develop
+  tags:
+    - bulkmail
+    - sysadmin
+  script:
+    - buildah rm $(buildah ps -q)
 
 build_stage:
   stage: build
