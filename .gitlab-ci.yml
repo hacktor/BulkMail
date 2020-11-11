@@ -17,7 +17,8 @@ clean_stage:
     - bulkmail
     - sysadmin
   script:
-    - buildah rm $(buildah ps -q)
+    - containers="$(buildah ps -aq --filter name="ubuntu-working-container")"
+    - [ -n "$containers" ] && buildah rm $containers
 
 build_stage:
   stage: build
