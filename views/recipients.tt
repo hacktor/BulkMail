@@ -32,14 +32,14 @@
           <div id="addrlist" class='tabdummy' style='display: none;'>
             <p><h2>Voer email adressen in, één per regel</h2></p>
             <p><textarea name="adreslijst" rows="20" style="width: 640px;"></textarea></p>
-            <p><input type="submit" value="Verzend"></p>
+            <p><input type="submit" value="Klaarzetten voor verzenden"></p>
           </div>
 
           <div id="textfile" class='tabdummy' style='display: none;'>
             <p><h2>Upload een text bestand met email adressen, één per regel</h2>
             Let op: hier geen Word of Excel bestanden</p>
             <p><input type="file" name="text"></p>
-            <p><input type="submit" value="Verzend"></p>
+            <p><input type="submit" value="Klaarzetten voor verzenden"></p>
           </div>
 
           <div id="spreadsheet" class='tabdummy' style='display: none;'>
@@ -47,7 +47,7 @@
             <h2>Ondersteunde formaten: csv, xls, xlsx, ods</h2>
             Data buiten de eerste kolom worden in deze versie van de bulkmailer genegeerd</p>
             <p><input type="file" name="spread"></p>
-            <p><input type="submit" value="Verzend"></p>
+            <p><input type="submit" value="Klaarzetten voor verzenden"></p>
           </div>
   
           </form>
