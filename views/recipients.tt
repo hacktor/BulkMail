@@ -27,6 +27,7 @@
             <button type="button" class="tablinks" onclick="openTab(event, 'addrlist', 'tabdummy')">Invoer adressen</button>
             <button type="button" class="tablinks" onclick="openTab(event, 'textfile', 'tabdummy')">Upload Textbestand</button>
             <button type="button" class="tablinks" onclick="openTab(event, 'spreadsheet', 'tabdummy')">Upload Spreadsheet</button>
+            <button type="button" class="tablinks" onclick="openTab(event, 'remarks', 'tabdummy')">Opmerking / Verzoek lijst</button>
           </div>
 
           <div id="addrlist" class='tabdummy' style='display: none;'>
@@ -49,7 +50,14 @@
             <p><input type="file" name="spread"></p>
             <p><input type="submit" value="Klaarzetten voor verzenden"></p>
           </div>
-  
+
+          <div id="remarks" class='tabdummy' style='display: none;'>
+            <p><h2>Hier kan een verzoek gedaan worden om de mailing naar een lijst te sturen</h2>
+            Ook andere opmerkingen betreffende de mailing kunnen hier geplaatst worden</p>
+            <p><textarea name="remarks" rows="50" style="width: 640px;"><% remarks %></textarea></p>
+            <p><input type="submit" value="Indienen voor verzenden"></p>
+          </div>
+
           </form>
 
         </div>

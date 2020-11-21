@@ -41,6 +41,7 @@ any ['get', 'post'] => '/mailing/:key' => sub {
         my $message;
         my $name = ($row->{from_name}) ? $row->{from_name} : config->{myname};
         my $from = Email::Address::XS->parse($row->{from_address});
+        my $remarks = (defined params->{remarks}) ? params->{remarks} : '';
         my $checked = $from->address();
 
         if (defined param('replyto')) {
@@ -58,7 +59,7 @@ any ['get', 'post'] => '/mailing/:key' => sub {
 
         # update replyto adres
         $stm = $db->prepare( config->{sqlite}{update_from} );
-        unless ($stm->execute($from->address(),$from->phrase(),session->{key})) {
+        unless ($stm->execute($from->address(),$from->phrase(),$remarks,session->{key})) {
             template 'index', { error => "Fout in update afzender" };
             return;
         }
@@ -85,6 +86,7 @@ any ['get', 'post'] => '/mailing/:key' => sub {
                              body => encode_entities($row->{body}),
                              message => encode_entities($message),
                              checked => encode_entities($checked),
+                             remarks => encode_entities($remarks),
                              froms => \@froms};
 
     } else {
@@ -104,8 +106,10 @@ post '/recipients' => sub {
             # update sqlite database
             my $name = (defined params->{name}) ? params->{name} : config->{myname};
             my $replyto = (defined params->{replyto}) ? params->{replyto} : config->{myfrom};
+            my $remarks = (defined params->{remarks}) ? params->{remarks} : '';
+
             my $stu = $db->prepare( config->{sqlite}{update_from} );
-            unless ($stu->execute($replyto,$name,session->{key})) {
+            unless ($stu->execute($replyto,$name,$remarks,session->{key})) {
 
                 template 'index', { error => "Fout in update afzender adres" };
                 return;
@@ -114,6 +118,7 @@ post '/recipients' => sub {
             my $from = Email::Address::XS->new($name, $replyto);
             template 'recipients', {subject => encode_entities(decode("MIME-Header",$row->{subject})),
                                     from => encode_entities($row->{from_address}),
+                                    remarks => encode_entities($remarks),
                                     replyto => encode_entities($from->format())};
         } else {
 
@@ -174,6 +179,7 @@ post '/submit' => sub {
                 template 'submit', {subject => encode_entities(decode("MIME-Header",$row->{subject})),
                                     from => encode_entities($row->{from_address}),
                                     replyto => encode_entities($from->format()),
+                                    remarks => encode_entities($row->{remarks}),
                                     authorize_by => encode_entities( config->{authorize_by} ),
                                     rcptnr => scalar %{$chkres->{recipients}},
                                     dblenr => scalar %{$chkres->{doubles}},
@@ -207,7 +213,7 @@ any ['get', 'post'] => '/submitted/:ackkey' => sub {
             my $replyto = Email::Address::XS->parse(param('replyto'));
             if ($replyto->is_valid()) {
                 my $stm = $db->prepare( config->{sqlite}{update_from} );
-                unless ($stm->execute($replyto->address(),$replyto->phrase(),$row->{key})) {
+                unless ($stm->execute($replyto->address(),$replyto->phrase(),$row->{remarks},$row->{key})) {
                     $message .= "Fout in update afzender\n";
                 }
                 $from = $replyto;
@@ -239,6 +245,7 @@ any ['get', 'post'] => '/submitted/:ackkey' => sub {
                                replyto => encode_entities($from->format()),
                                rcptnr => scalar @rcpt,
                                rcpt => encode_entities($row->{recipients}),
+                               remarks => encode_entities($row->{remarks}),
                                message => encode_entities($message),
                                body => encode_entities($row->{body})};
 
