@@ -260,17 +260,31 @@ post '/done' => sub {
 
     if (my $row = $stm->fetchrow_hashref()) {
 
-        # store the mailing to be picked up by the mailer thread
-        $stm = $db->prepare(config->{sqlite}{insert_mailing});
-        unless ($stm->execute($row->{key})) {
-            template 'index', { error => "Fout in klaarzetten mailing" };
-            return;
+        my $message;
+        # check if the mailing was submitted before
+        $stm = $db->prepare(config->{sqlite}{get_mailing});
+        $stm->execute($row->{key});
+
+        if (my $mailing = $stm->fetchrow_hashref()) {
+
+            $message = "Mailing is al eerder goedgekeurd";
+            $message .= " maar nog niet verzonden" if $mailing->{status} == 0;
+            $message .= " en wordt nu verzonden" if $mailing->{status} == 1;
+            $message .= " en verzonden" if $mailing->{status} == 2;
+
+        } else {
+
+            # store the mailing to be picked up by the mailer thread
+            $stm = $db->prepare(config->{sqlite}{insert_mailing});
+            $stm->execute($row->{key});
         }
 
         my $from = Email::Address::XS->new($row->{from_name}, $row->{replyto});
         template 'done', {subject => encode_entities(decode("MIME-Header",$row->{subject})),
                           from => encode_entities($row->{from_address}),
-                          replyto => encode_entities($from->format())};
+                          replyto => encode_entities($from->format()),
+                          message => $message};
+
     } else {
         template 'index', { error => "Key niet gevonden in database" };
     }

@@ -8,14 +8,13 @@
     </div>
 
     <div id="bodytext">
-      <h1>Mailing wordt verstuurd:</h1>
 
-      <% IF message %><h2><% message %></h2><% END %>
+      <% IF message %><h1><% message %></h1><% ELSE %><h1>Mailing wordt verstuurd</h1><% END %>
 
       <div id="maintext-highlight">
         <table>
           <tr><td><b>Afzender</b></td><td><% from %></td></tr>
-          <tr><td><b>Wordt verzonden als</b></td><td><% replyto %></td></tr>
+          <tr><td><b>Verzonden als</b></td><td><% replyto %></td></tr>
           <tr><td><b>Onderwerp</b></td><td><% subject %></td></tr>
         </table>
       </div>

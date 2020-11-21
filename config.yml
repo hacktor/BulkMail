@@ -47,6 +47,7 @@ sqlite:
     get_all: 'select id, from_address, replyto, subject, date, recipients from mbox'
 
     insert_mailing: 'insert into mailings (key) values (?)' 
+    get_mailing: 'select * from mailings where key = ?'
     get_mailings: 'select * from mailings where status = ?'
     update_status: 'update mailings set status = ? where key = ?'
     update_delivered: 'update mailings set delivered = ? where key = ?'
