@@ -19,6 +19,8 @@
           <tr><td><b>Onderwerp</b></td><td><% subject %></td></tr>
           <tr><td><b>Geadresseerden</b></td><td><% rcptnr %></td></tr>
         </table>
+        <h2>Opmerkingen</h2>
+        <pre><% remarks %></pre>
       </div>
 
       <h3>Bewerk afzender of onderwerp</h3>
@@ -42,8 +44,17 @@
       <div id='contents' class='tabcontent' class=preformatted-body style='display: none;'>
 <% body %>
       </div>
+
       <div id='recipients' class='tabcontent' class=preformatted-body style='display: none;'>
-<% rcpt %>
+
+        <form method=POST>
+        <p><h2>Download text bestand met ontvanger adressen</h2></p>
+        <input type="button" download value="Download Ontvangers" onclick="window.location.href = <% href %>;" target="_BLANK"/>
+
+        <p><h2>Upload een nieuw text bestand met email adressen één per regel</h2></p>
+        <p><input type="file" name="text"></p>
+        </form>
+
       </div>
 
     </div>

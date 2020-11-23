@@ -174,13 +174,16 @@ post '/submit' => sub {
                     return;
                 }
                 $row->{recipients} = $rcptstr;
+                saverecipients($row->{key}, values %{$chkres->{recipients}});
                 sendNotify($row);
+
                 my $from = Email::Address::XS->new($row->{from_name}, $row->{replyto});
                 template 'submit', {subject => encode_entities(decode("MIME-Header",$row->{subject})),
                                     from => encode_entities($row->{from_address}),
                                     replyto => encode_entities($from->format()),
                                     remarks => encode_entities($row->{remarks}),
                                     authorize_by => encode_entities( config->{authorize_by} ),
+                                    href => "/$row->{key}.rcpt.txt",
                                     rcptnr => scalar %{$chkres->{recipients}},
                                     dblenr => scalar %{$chkres->{doubles}},
                                     invanr => scalar @{$chkres->{invalid}}};
@@ -238,13 +241,29 @@ any ['get', 'post'] => '/submitted/:ackkey' => sub {
             $message = "Voorbeeld mail verzonder naar ". config->{authorize_by};
         }
 
+        if (my $file = request->upload("text")) {
+
+            my @list = split /\r?\n/, $file->content;
+            my $chkres = checkemail(@list);
+            if (ref $chkres->{recipients} eq "HASH") {
+
+                $row->{recipients} = join ', ', values %{$chkres->{recipients}};
+                saverecipients($row->{key}, values %{$chkres->{recipients}});
+
+                my $stu = $db->prepare( config->{sqlite}{update_rcpt} );
+                unless ($stu->execute($row->{recipients},'','',session->{key})) {
+                    template 'index', { error => "Fout in update ontvanger adressen" };
+                    return;
+                }
+            }
+        }
+
         my @rcpt = split /, /, $row->{recipients};
 
         template 'submitted', {subject => encode_entities(decode("MIME-Header",$row->{subject})),
                                from => encode_entities($row->{from_address}),
                                replyto => encode_entities($from->format()),
                                rcptnr => scalar @rcpt,
-                               rcpt => encode_entities($row->{recipients}),
                                remarks => encode_entities($row->{remarks}),
                                message => encode_entities($message),
                                body => encode_entities($row->{body})};
@@ -566,6 +585,15 @@ sub mailing {
             debug("Report sent");
         }
     }
+}
+
+sub saverecipients {
+
+    my ($key, @rcpt) = @_;
+    mkdir "public/dl" unless -d "public/dl";
+    open my $fh,">","public/dl/$key.rcpt.txt";
+    print $fh join "\n", @rcpt;
+    close $fh;
 }
 
 true;

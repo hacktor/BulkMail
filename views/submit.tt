@@ -19,8 +19,14 @@
           <tr><td><b>Dubbele adressen</b></td><td><% dblenr %></td></tr>
           <tr><td><b>Foutieve adressen</b></td><td><% invanr %></td></tr>
         </table>
+        <h2>Opmerkingen</h2>
+        <pre><% remarks %></pre>
       </div>
 
+      <form>
+        <p><h2>Download text bestand met ontvanger adressen</h2></p>
+        <input type="button" download value="Download Ontvangers" onclick="window.location.href = <% href %>;" target="_BLANK"/>
+      </form>
 
       <br />
       <p>Een mail ter goedgekeuring is verstuurd naar <% authorize_by %></p>
