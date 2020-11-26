@@ -183,7 +183,7 @@ post '/submit' => sub {
                                     replyto => encode_entities($from->format()),
                                     remarks => encode_entities($row->{remarks}),
                                     authorize_by => encode_entities( config->{authorize_by} ),
-                                    href => "/$row->{key}.rcpt.txt",
+                                    href => "/dl/$row->{key}.rcpt.txt",
                                     rcptnr => scalar %{$chkres->{recipients}},
                                     dblenr => scalar %{$chkres->{doubles}},
                                     invanr => scalar @{$chkres->{invalid}}};
@@ -263,6 +263,7 @@ any ['get', 'post'] => '/submitted/:ackkey' => sub {
         template 'submitted', {subject => encode_entities(decode("MIME-Header",$row->{subject})),
                                from => encode_entities($row->{from_address}),
                                replyto => encode_entities($from->format()),
+                               href => "/dl/$row->{key}.rcpt.txt",
                                rcptnr => scalar @rcpt,
                                remarks => encode_entities($row->{remarks}),
                                message => encode_entities($message),
@@ -592,7 +593,8 @@ sub saverecipients {
     my ($key, @rcpt) = @_;
     mkdir "public/dl" unless -d "public/dl";
     open my $fh,">","public/dl/$key.rcpt.txt";
-    print $fh join "\n", @rcpt;
+    print $fh join "\r\n", @rcpt;
+    print $fh "\r\n";
     close $fh;
 }
 
