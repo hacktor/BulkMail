@@ -34,22 +34,24 @@
       <br />
 
       <div class="tab">
-        <button type="button" class="tablinks" onclick="openTab(event, 'contents', 'tabcontent')">Inhoud mail</button>
-        <button type="button" class="tablinks" onclick="openTab(event, 'recipients', 'tabcontent')">Ontvangers</button>
+        <button type="button" class="tablinks" onclick="openTab(event, 'contents', 'tabdummy')">Inhoud mail</button>
+        <button type="button" class="tablinks" onclick="openTab(event, 'recipients', 'tabdummy')">Ontvangers</button>
         <button type="submit" class="tablinks" name="examplemail" formaction="">Stuur voorbeeld</button>
         <button type="submit" class="tablinks" name="authorize">Start mailing</button>
       </div>
       </form>
 
-      <div id='contents' class='tabcontent' class=preformatted-body style='display: none;'>
+      <div id='contents' class='tabdummy tabcontent' class=preformatted-body style='display: none;'>
 <% body %>
       </div>
 
-      <div id='recipients' class='tabcontent' class=preformatted-body style='display: none;'>
+      <div id='recipients' class='tabdummy' class=preformatted-body style='display: none;'>
 
         <form method=POST>
         <p><h2>Download text bestand met ontvanger adressen</h2></p>
-        <input type="button" download value="Download Ontvangers" onclick="window.location.href = <% href %>;" target="_BLANK"/>
+        <a href="<% href %>" download="ontvangers.txt">
+          <button type="button">Download ontvangers</button>
+        </a>
 
         <p><h2>Upload een nieuw text bestand met email adressen één per regel</h2></p>
         <p><input type="file" name="text"></p>

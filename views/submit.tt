@@ -25,7 +25,9 @@
 
       <form>
         <p><h2>Download text bestand met ontvanger adressen</h2></p>
-        <input type="button" download value="Download Ontvangers" onclick="window.location.href = <% href %>;" target="_BLANK"/>
+        <a href="<% href %>" download="ontvangers.txt">
+          <button type="button">Download ontvangers</button>
+        </a>
       </form>
 
       <br />

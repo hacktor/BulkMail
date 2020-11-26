@@ -54,7 +54,7 @@
           <div id="remarks" class='tabdummy' style='display: none;'>
             <p><h2>Hier kan een verzoek gedaan worden om de mailing naar een lijst te sturen</h2>
             Ook andere opmerkingen betreffende de mailing kunnen hier geplaatst worden</p>
-            <p><textarea name="remarks" rows="50" style="width: 640px;"><% remarks %></textarea></p>
+            <p><textarea name="remarks" rows="4" style="width: 640px;"><% remarks %></textarea></p>
             <p><input type="submit" value="Indienen voor verzenden"></p>
           </div>
 
