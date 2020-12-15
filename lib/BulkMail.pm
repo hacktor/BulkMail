@@ -219,6 +219,8 @@ any ['get', 'post'] => '/submitted/:ackkey' => sub {
                 unless ($stm->execute($replyto->address(),$replyto->phrase(),$row->{remarks},$row->{key})) {
                     $message .= "Fout in update afzender\n";
                 }
+                $row->{replyto} = $replyto->address();
+                $row->{from_name} = $replyto->phrase();
                 $from = $replyto;
             } else {
                 $message .= "Invalide Afzender\n";
@@ -235,10 +237,17 @@ any ['get', 'post'] => '/submitted/:ackkey' => sub {
             }
         }
 
+        my $sendto = Email::Address::XS->parse( (defined param('sendto')) ? param('sendto') : config->{authorize_by} );
+
         if (defined param('examplemail')) {
 
-            examplemail( config->{authorize_by}, $row );
-            $message = "Voorbeeld mail verzonder naar ". config->{authorize_by};
+            if ($sendto->is_valid()) {
+
+                examplemail( $sendto->format(), $row );
+                $message = "Voorbeeld mail verzonder naar ". $sendto->format();
+            } else {
+                $message = "Invalide email adres, niet verzonden";
+            }
         }
 
         if (my $file = request->upload("text")) {
@@ -263,6 +272,7 @@ any ['get', 'post'] => '/submitted/:ackkey' => sub {
         template 'submitted', {subject => encode_entities(decode("MIME-Header",$row->{subject})),
                                from => encode_entities($row->{from_address}),
                                replyto => encode_entities($from->format()),
+                               sendto => $sendto->format(),
                                href => "/dl/$row->{key}.rcpt.txt",
                                rcptnr => scalar @rcpt,
                                remarks => encode_entities($row->{remarks}),

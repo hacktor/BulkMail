@@ -36,7 +36,7 @@
       <div class="tab">
         <button type="button" class="tablinks" onclick="openTab(event, 'contents', 'tabdummy')">Inhoud mail</button>
         <button type="button" class="tablinks" onclick="openTab(event, 'recipients', 'tabdummy')">Ontvangers</button>
-        <button type="submit" class="tablinks" name="examplemail" formaction="">Stuur voorbeeld</button>
+        <button type="button" class="tablinks" onclick="openTab(event, 'examplemailtab', 'tabdummy')">Stuur voorbeeld</button>
         <button type="submit" class="tablinks" name="authorize">Start mailing</button>
       </div>
       </form>
@@ -45,7 +45,17 @@
 <% body %>
       </div>
 
-      <div id='recipients' class='tabdummy' class=preformatted-body style='display: none;'>
+      <div id='examplemailtab' class='tabdummy preformatted-body' style='display: none;'>
+        <form method=POST>
+        <table border=0>
+        <tr><td><b>Stuur voorbeeld mail naar</b></td></tr>
+        <tr><td><input style="width: 540px;" type="text" name="sendto" value="<% sendto %>"></td></tr>
+        <tr><td><button type="submit" class="tablinks" name="examplemail" formaction="">Stuur voorbeeld</button></td></tr>
+        </table>
+        </form>
+      </div>
+
+      <div id='recipients' class='tabdummy' class='preformatted-body' style='display: none;'>
 
         <form method=POST>
         <p><h2>Download text bestand met ontvanger adressen</h2></p>
