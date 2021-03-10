@@ -4,8 +4,21 @@ variables:
   IMAGEDIR: "registry.ict-sys.tudelft.nl/images"
 
 stages:
+  - clean
   - build
   - push
+
+clean_stage:
+  stage: clean
+  only:
+    - master
+    - develop
+  tags:
+    - bulkmail
+    - sysadmin
+  script:
+    - 'containers="$(buildah ps -aq --filter name="ubuntu-working-container")"'
+    - 'if [ -n "$containers" ]; then buildah rm $containers; fi'
 
 build_stage:
   stage: build

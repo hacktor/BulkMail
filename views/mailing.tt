@@ -40,14 +40,23 @@
       </div>
 
       <div class="tab">
-        <button type="button" class="tablinks" onclick="openTab(event, 'contents', 'tabcontent')">Ruwe inhoud mail</button>
+        <button type="button" class="tablinks" onclick="openTab(event, 'contents', 'tabdummy')">Ruwe inhoud mail</button>
+        <button type="button" class="tablinks" onclick="openTab(event, 'remarks', 'tabdummy')">Opmerking / Verzoek</button>
         <button type="submit" class="tablinks" name="examplemail" formaction="">Stuur voorbeeld</button>
-        <button type="submit" class="tablinks" name="recipients">Naar ontvangers</button>
+        <button type="submit" class="tablinks" name="recipients">Selecteer ontvangers</button>
       </div>
 
-      <div id='contents' class='tabcontent' class=preformatted-body style='display: none;'>
+      <div id='contents' class='tabdummy tabcontent preformatted-body' style='display: none;'>
 <% body %>
       </div>
+
+      <div id="remarks" class='tabdummy' style='display: none;'>
+        <p><h2>Hier kan een verzoek gedaan worden om de mailing naar een lijst te sturen</h2>
+        Ook andere opmerkingen betreffende de mailing kunnen hier geplaatst worden</p>
+        <p><textarea name="remarks" rows="4" style="width: 640px;"><% remarks %></textarea></p>
+        <p><input type="submit" value="Naar ontvangers"></p>
+      </div>
+
 
       </form>
     </div>

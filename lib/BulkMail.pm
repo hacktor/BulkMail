@@ -2,6 +2,7 @@ package BulkMail;
 use utf8;
 use Dancer ':syntax';
 use HTML::Entities;
+use Encode qw(decode);
 use Email::Simple;
 use Email::Sender::Simple qw(sendmail);
 use Email::Simple::Creator;
@@ -40,6 +41,7 @@ any ['get', 'post'] => '/mailing/:key' => sub {
         my $message;
         my $name = ($row->{from_name}) ? $row->{from_name} : config->{myname};
         my $from = Email::Address::XS->parse($row->{from_address});
+        my $remarks = (defined params->{remarks}) ? params->{remarks} : '';
         my $checked = $from->address();
 
         if (defined param('replyto')) {
@@ -57,7 +59,7 @@ any ['get', 'post'] => '/mailing/:key' => sub {
 
         # update replyto adres
         $stm = $db->prepare( config->{sqlite}{update_from} );
-        unless ($stm->execute($from->address(),$from->phrase(),session->{key})) {
+        unless ($stm->execute($from->address(),$from->phrase(),$remarks,session->{key})) {
             template 'index', { error => "Fout in update afzender" };
             return;
         }
@@ -77,13 +79,14 @@ any ['get', 'post'] => '/mailing/:key' => sub {
         $checked = $from->address();
 
         session key => param('key');
-        template 'mailing', {subject => encode_entities($row->{subject}),
+        template 'mailing', {subject => encode_entities(decode("MIME-Header",$row->{subject})),
                              from => encode_entities($from->address()),
                              name => encode_entities($from->phrase()),
                              date => encode_entities($row->{date}),
                              body => encode_entities($row->{body}),
                              message => encode_entities($message),
                              checked => encode_entities($checked),
+                             remarks => encode_entities($remarks),
                              froms => \@froms};
 
     } else {
@@ -103,16 +106,19 @@ post '/recipients' => sub {
             # update sqlite database
             my $name = (defined params->{name}) ? params->{name} : config->{myname};
             my $replyto = (defined params->{replyto}) ? params->{replyto} : config->{myfrom};
+            my $remarks = (defined params->{remarks}) ? params->{remarks} : '';
+
             my $stu = $db->prepare( config->{sqlite}{update_from} );
-            unless ($stu->execute($replyto,$name,session->{key})) {
+            unless ($stu->execute($replyto,$name,$remarks,session->{key})) {
 
                 template 'index', { error => "Fout in update afzender adres" };
                 return;
             }
 
             my $from = Email::Address::XS->new($name, $replyto);
-            template 'recipients', {subject => encode_entities($row->{subject}),
+            template 'recipients', {subject => encode_entities(decode("MIME-Header",$row->{subject})),
                                     from => encode_entities($row->{from_address}),
+                                    remarks => encode_entities($remarks),
                                     replyto => encode_entities($from->format())};
         } else {
 
@@ -168,12 +174,16 @@ post '/submit' => sub {
                     return;
                 }
                 $row->{recipients} = $rcptstr;
+                saverecipients($row->{key}, values %{$chkres->{recipients}});
                 sendNotify($row);
+
                 my $from = Email::Address::XS->new($row->{from_name}, $row->{replyto});
-                template 'submit', {subject => encode_entities($row->{subject}),
+                template 'submit', {subject => encode_entities(decode("MIME-Header",$row->{subject})),
                                     from => encode_entities($row->{from_address}),
                                     replyto => encode_entities($from->format()),
+                                    remarks => encode_entities($row->{remarks}),
                                     authorize_by => encode_entities( config->{authorize_by} ),
+                                    href => "/dl/$row->{key}.rcpt.txt",
                                     rcptnr => scalar %{$chkres->{recipients}},
                                     dblenr => scalar %{$chkres->{doubles}},
                                     invanr => scalar @{$chkres->{invalid}}};
@@ -206,9 +216,11 @@ any ['get', 'post'] => '/submitted/:ackkey' => sub {
             my $replyto = Email::Address::XS->parse(param('replyto'));
             if ($replyto->is_valid()) {
                 my $stm = $db->prepare( config->{sqlite}{update_from} );
-                unless ($stm->execute($replyto->address(),$replyto->phrase(),$row->{key})) {
+                unless ($stm->execute($replyto->address(),$replyto->phrase(),$row->{remarks},$row->{key})) {
                     $message .= "Fout in update afzender\n";
                 }
+                $row->{replyto} = $replyto->address();
+                $row->{from_name} = $replyto->phrase();
                 $from = $replyto;
             } else {
                 $message .= "Invalide Afzender\n";
@@ -225,19 +237,45 @@ any ['get', 'post'] => '/submitted/:ackkey' => sub {
             }
         }
 
+        my $sendto = Email::Address::XS->parse( (defined param('sendto')) ? param('sendto') : config->{authorize_by} );
+
         if (defined param('examplemail')) {
 
-            examplemail( config->{authorize_by}, $row );
-            $message = "Voorbeeld mail verzonder naar ". config->{authorize_by};
+            if ($sendto->is_valid()) {
+
+                examplemail( $sendto->format(), $row );
+                $message = "Voorbeeld mail verzonder naar ". $sendto->format();
+            } else {
+                $message = "Invalide email adres, niet verzonden";
+            }
+        }
+
+        if (my $file = request->upload("text")) {
+
+            my @list = split /\r?\n/, $file->content;
+            my $chkres = checkemail(@list);
+            if (ref $chkres->{recipients} eq "HASH") {
+
+                $row->{recipients} = join ', ', values %{$chkres->{recipients}};
+                saverecipients($row->{key}, values %{$chkres->{recipients}});
+
+                my $stu = $db->prepare( config->{sqlite}{update_rcpt} );
+                unless ($stu->execute($row->{recipients},'','',session->{key})) {
+                    template 'index', { error => "Fout in update ontvanger adressen" };
+                    return;
+                }
+            }
         }
 
         my @rcpt = split /, /, $row->{recipients};
 
-        template 'submitted', {subject => encode_entities($row->{subject}),
+        template 'submitted', {subject => encode_entities(decode("MIME-Header",$row->{subject})),
                                from => encode_entities($row->{from_address}),
                                replyto => encode_entities($from->format()),
+                               sendto => $sendto->format(),
+                               href => "/dl/$row->{key}.rcpt.txt",
                                rcptnr => scalar @rcpt,
-                               rcpt => encode_entities($row->{recipients}),
+                               remarks => encode_entities($row->{remarks}),
                                message => encode_entities($message),
                                body => encode_entities($row->{body})};
 
@@ -259,17 +297,31 @@ post '/done' => sub {
 
     if (my $row = $stm->fetchrow_hashref()) {
 
-        # store the mailing to be picked up by the mailer thread
-        $stm = $db->prepare(config->{sqlite}{insert_mailing});
-        unless ($stm->execute($row->{key})) {
-            template 'index', { error => "Fout in klaarzetten mailing" };
-            return;
+        my $message;
+        # check if the mailing was submitted before
+        $stm = $db->prepare(config->{sqlite}{get_mailing});
+        $stm->execute($row->{key});
+
+        if (my $mailing = $stm->fetchrow_hashref()) {
+
+            $message = "Mailing is al eerder goedgekeurd";
+            $message .= " maar nog niet verzonden" if $mailing->{status} == 0;
+            $message .= " en wordt nu verzonden" if $mailing->{status} == 1;
+            $message .= " en verzonden" if $mailing->{status} == 2;
+
+        } else {
+
+            # store the mailing to be picked up by the mailer thread
+            $stm = $db->prepare(config->{sqlite}{insert_mailing});
+            $stm->execute($row->{key});
         }
 
         my $from = Email::Address::XS->new($row->{from_name}, $row->{replyto});
-        template 'done', {subject => encode_entities($row->{subject}),
+        template 'done', {subject => encode_entities(decode("MIME-Header",$row->{subject})),
                           from => encode_entities($row->{from_address}),
-                          replyto => encode_entities($from->format())};
+                          replyto => encode_entities($from->format()),
+                          message => $message};
+
     } else {
         template 'index', { error => "Key niet gevonden in database" };
     }
@@ -391,8 +443,14 @@ sub examplemail {
         $reply->header_raw_set($h, $row->{$header}) if $row->{$header};
     }
 
-    sendmail($reply, { transport => transport() });
-    debug( "Example to ". $reply->header("To") ." send\n");
+    eval {
+        sendmail($reply, { transport => transport(), from => config->{bounce} });
+    };
+    if ($@) {
+        debug($@);
+    } else {
+        debug( "Example to ". $reply->header("To") ." send\n");
+    }
 }
 
 sub sendReceipt {
@@ -409,8 +467,14 @@ sub sendReceipt {
         body => template 'sendrcpt', { myurl => config->{myurl}, key => $key }, { layout => undef },
     );
 
-    sendmail($reply, { transport => transport() });
-    debug( "Reply to ". $reply->header("To") ." send\n");
+    eval {
+        sendmail($reply, { transport => transport(), from => config->{bounce} });
+    };
+    if ($@) {
+        debug($@);
+    } else {
+        debug( "Reply to ". $reply->header("To") ." send\n");
+    }
 }
 
 sub sendNotify {
@@ -436,8 +500,14 @@ sub sendNotify {
                                            addr => \@rcptlist }, { layout => undef },
         );
 
-        sendmail($reply, { transport => transport() });
-        debug("Authorization request to ". $reply->header("To") ." send\n");
+        eval {
+            sendmail($reply, { transport => transport(), from => config->{bounce} });
+        };
+        if ($@) {
+            debug($@);
+        } else {
+            debug("Authorization request to ". $reply->header("To") ." send\n");
+        }
     } else {
         debug("Authorization request not send\n");
     }
@@ -482,7 +552,7 @@ sub mailing {
             }
 
             eval {
-                sendmail($reply, { transport => transport() });
+                sendmail($reply, { transport => transport(), from => config->{bounce} });
             };
             if ($@) {
                 $failed .= ($failed) ? ", $to" : $to;
@@ -518,11 +588,24 @@ sub mailing {
                 delivered => \@D }, { layout => undef },
         );
         eval {
-            sendmail($report, { transport => transport() });
+            sendmail($report, { transport => transport(), from => config->{bounce} });
         };
-        debug($@) if $@;
-        debug("Report sent");
+        if ($@) {
+            debug($@);
+        } else {
+            debug("Report sent");
+        }
     }
+}
+
+sub saverecipients {
+
+    my ($key, @rcpt) = @_;
+    mkdir "public/dl" unless -d "public/dl";
+    open my $fh,">","public/dl/$key.rcpt.txt";
+    print $fh join "\r\n", @rcpt;
+    print $fh "\r\n";
+    close $fh;
 }
 
 true;

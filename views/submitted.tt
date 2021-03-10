@@ -19,6 +19,8 @@
           <tr><td><b>Onderwerp</b></td><td><% subject %></td></tr>
           <tr><td><b>Geadresseerden</b></td><td><% rcptnr %></td></tr>
         </table>
+        <h2>Opmerkingen</h2>
+        <pre><% remarks %></pre>
       </div>
 
       <h3>Bewerk afzender of onderwerp</h3>
@@ -32,18 +34,39 @@
       <br />
 
       <div class="tab">
-        <button type="button" class="tablinks" onclick="openTab(event, 'contents', 'tabcontent')">Inhoud mail</button>
-        <button type="button" class="tablinks" onclick="openTab(event, 'recipients', 'tabcontent')">Ontvangers</button>
-        <button type="submit" class="tablinks" name="examplemail" formaction="">Stuur voorbeeld</button>
+        <button type="button" class="tablinks" onclick="openTab(event, 'contents', 'tabdummy')">Inhoud mail</button>
+        <button type="button" class="tablinks" onclick="openTab(event, 'recipients', 'tabdummy')">Ontvangers</button>
+        <button type="button" class="tablinks" onclick="openTab(event, 'examplemailtab', 'tabdummy')">Stuur voorbeeld</button>
         <button type="submit" class="tablinks" name="authorize">Start mailing</button>
       </div>
       </form>
 
-      <div id='contents' class='tabcontent' class=preformatted-body style='display: none;'>
+      <div id='contents' class='tabdummy tabcontent' class=preformatted-body style='display: none;'>
 <% body %>
       </div>
-      <div id='recipients' class='tabcontent' class=preformatted-body style='display: none;'>
-<% rcpt %>
+
+      <div id='examplemailtab' class='tabdummy preformatted-body' style='display: none;'>
+        <form method=POST>
+        <table border=0>
+        <tr><td><b>Stuur voorbeeld mail naar</b></td></tr>
+        <tr><td><input style="width: 540px;" type="text" name="sendto" value="<% sendto %>"></td></tr>
+        <tr><td><button type="submit" class="tablinks" name="examplemail" formaction="">Stuur voorbeeld</button></td></tr>
+        </table>
+        </form>
+      </div>
+
+      <div id='recipients' class='tabdummy' class='preformatted-body' style='display: none;'>
+
+        <form method=POST>
+        <p><h2>Download text bestand met ontvanger adressen</h2></p>
+        <a href="<% href %>" download="ontvangers.txt">
+          <button type="button">Download ontvangers</button>
+        </a>
+
+        <p><h2>Upload een nieuw text bestand met email adressen één per regel</h2></p>
+        <p><input type="file" name="text"></p>
+        </form>
+
       </div>
 
     </div>

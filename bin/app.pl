@@ -58,7 +58,9 @@ threads->create(sub {
                     }
 
                     # filter NDR's
-                    if ($email->header("From") =~ /MAILER-DAEMON/ or $email->header("Subject") =~ /Undelivered Mail/i) {
+                    if ($email->header("To") eq config->{bounce} or
+                        $email->header("From") =~ /MAILER-DAEMON/ or
+                        $email->header("Subject") =~ /Undelivered Mail/i) {
 
                         # TODO undeliver count?
                         debug("Received NDR, moving to NDR folder");

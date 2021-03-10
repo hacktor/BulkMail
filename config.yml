@@ -33,12 +33,13 @@ saveheaders:
 myurl: https://example.com
 myfrom: bulkmail@example.com
 myname: Bulk Mailer
+bounce: bulkmail+bounce@example.com
 
 sqlite:
     db: 'emails.db'
 
     insert: 'insert into mbox (key,ackkey,from_address,subject,date,Content_Type,Content_Transfer_Encoding,Content_Language,MIME_Version,body) values (?,?,?,?,?,?,?,?,?,?)'
-    update_from: 'update mbox set replyto = ?, from_name = ? where key = ?'
+    update_from: 'update mbox set replyto = ?, from_name = ?, remarks = ? where key = ?'
     update_rcpt: 'update mbox set recipients = ?, doubles = ?, invalid = ? where key = ?'
     update_subj: 'update mbox set subject = ? where key = ?'
     get_mail: 'select * from mbox where key = ?'
@@ -46,6 +47,7 @@ sqlite:
     get_all: 'select id, from_address, replyto, subject, date, recipients from mbox'
 
     insert_mailing: 'insert into mailings (key) values (?)' 
+    get_mailing: 'select * from mailings where key = ?'
     get_mailings: 'select * from mailings where status = ?'
     update_status: 'update mailings set status = ? where key = ?'
     update_delivered: 'update mailings set delivered = ? where key = ?'
@@ -70,6 +72,7 @@ sqlite:
           Content_Language text,
           MIME_Version text,
           body text,
+          remarks text,
           recipients text,
           doubles text,
           invalid text
